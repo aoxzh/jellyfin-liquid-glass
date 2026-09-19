@@ -20,19 +20,21 @@
     --lg-accent: #0a84ff;
     --lg-accent-2: #64d2ff;
     --lg-accent-3: #bf5af2;
-    --lg-radius-sm: 12px;
-    --lg-radius-card: 18px;
-    --lg-radius-panel: 24px;
+    /* 单位规范: 布局基准 rem; 999px 为胶囊形惯例写法(效果等同 50% 大半径) */
+    --lg-radius-sm: 0.75rem;
+    --lg-radius-card: 1.125rem;
+    --lg-radius-panel: 1.5rem;
     --lg-radius-pill: 999px;
     --lg-shadow-1: 0 4px 14px rgba(0, 0, 0, 0.3);
     --lg-shadow-2: 0 10px 28px rgba(0, 0, 0, 0.42);
     --lg-ease: cubic-bezier(0.22, 1, 0.36, 1);
-    --lg-content-max: 46em;
+    /* 单位规范: 布局基准用 rem, 组件内随字号缩放的热区用 em, 滤镜半径用 px */
+    --lg-content-max: 46rem;
     --lg-tap-target: 2.75em;
     --lg-blur: blur(16px) saturate(160%);
 }
 
-/* ---------- 基底:极光渐变(静态绘制一次,滚动不repaint) ---------- */
+/* ---------- 基底:极光渐变(桌面端 fixed 一次性合成,滚动不repaint) ---------- */
 
 html {
     background: #05070d;
@@ -527,8 +529,8 @@ input[type="radio"] {
     padding: 2em 1.8em;
     width: 340px;
     max-width: calc(100vw - 32px);
-    margin-left: auto !important;
-    margin-right: auto !important;
+    margin-left: auto;
+    margin-right: auto;
     box-sizing: border-box;
 }
 
@@ -541,8 +543,8 @@ input[type="radio"] {
 .visualLoginForm ~ .readOnlyContent {
     width: 340px;
     max-width: calc(100vw - 32px);
-    margin-left: auto !important;
-    margin-right: auto !important;
+    margin-left: auto;
+    margin-right: auto;
     float: none;
     box-sizing: border-box;
 }
@@ -633,18 +635,20 @@ input[type="radio"] {
 
 @media (max-width: 40.625em) {
     :root {
-        --lg-radius-card: 16px;
-        --lg-radius-panel: 20px;
+        --lg-radius-card: 1rem;
+        --lg-radius-panel: 1.25rem;
         --lg-tap-target: 2.9em;
         --lg-blur: blur(12px) saturate(150%);
     }
 
+    /* iOS Safari 对 background-attachment: fixed 的合成层处理有缺陷
+       (滚动重绘卡顿/橡皮筋拉伸错位), 小屏端回退为 scroll */
     body {
         background:
             radial-gradient(150vw 90vh at 80% -5%, rgba(10, 132, 255, 0.45), transparent 60%),
             radial-gradient(130vw 80vh at -10% 105%, rgba(191, 90, 242, 0.4), transparent 60%),
             linear-gradient(160deg, #070b16 0%, #0b1428 50%, #080b18 100%) !important;
-        background-attachment: fixed !important;
+        background-attachment: scroll !important;
     }
 
     .skinHeader {
