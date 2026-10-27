@@ -160,7 +160,7 @@ v4 的改法：
 ### 文件结构
 
 ```
-liquid-glass.css              # 主题本体（3855 行，单文件，无外部依赖）
+liquid-glass.css              # 主题本体（3854 行，单文件，无外部依赖）
 docs/screenshots/*.webp       # 截图
 docs/schema.jsonld            # Schema.org 结构化数据（SoftwareApplication + FAQPage）
 llms.txt                      # 给 AI 引擎的内容索引
@@ -321,7 +321,7 @@ Captured from the project's own mock UI (**no real library data**) so the theme 
 ### Repository layout
 
 ```
-liquid-glass.css              # the theme (3855 lines, single file, no dependencies)
+liquid-glass.css              # the theme (3854 lines, single file, no dependencies)
 docs/screenshots/*.webp       # screenshots
 docs/schema.jsonld            # Schema.org structured data (SoftwareApplication + FAQPage)
 llms.txt                      # content index for AI engines

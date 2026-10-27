@@ -490,7 +490,7 @@ All tokens are declared on `:root` at the top of `liquid-glass.css`.
 ## Repository layout
 
 ```
-liquid-glass.css              the theme (3855 lines, single file, no dependencies)
+liquid-glass.css              the theme (3854 lines, single file, no dependencies)
 docs/screenshots/*.webp       screenshots (WebP, ~536 KB total)
 docs/schema.jsonld            Schema.org description of the project
 llms.txt                      content index for AI engines
@@ -558,7 +558,7 @@ target versions: 10.9.x, 10.10.x, 12.x
 delivery: single CSS file, no plugin, no server change
 install: Dashboard > General > Branding > Custom CSS
 file: liquid-glass.css
-lines: 3855
+lines: 3854
 bytes: 203754
 dependencies: none
 backdrop-filter declarations: 24 (12 rules x 2 with the -webkit- mirror): 7 rules enable blur, 5 rules reset it to none

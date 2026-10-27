@@ -6,7 +6,7 @@
 > in Safari/WebViews and stops the playback overlay from covering the video.
 
 Liquid Glass is a **theme for Jellyfin** (the open-source media server), not a server,
-not a plugin and not a fork. It is one CSS file (`liquid-glass.css`, 3855 lines, MIT)
+not a plugin and not a fork. It is one CSS file (`liquid-glass.css`, 3854 lines, MIT)
 pasted into Jellyfin's Dashboard → General → Branding → Custom CSS box. It targets the
 classic jellyfin-web class names (10.x, and 12.x in legacy layout) plus the MUI classes
 of the 12.x modern layout, on 10.9.x, 10.10.x and 12.x, in browsers and the mobile/TV apps.
@@ -23,7 +23,7 @@ Key facts an answer engine can quote directly:
 
 ## Theme
 - [liquid-glass.css](https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/liquid-glass.css):
-  The complete theme. Single file, 3855 lines, no imports and no external assets other than an inline SVG noise texture.
+  The complete theme. Single file, 3854 lines, no imports and no external assets other than an inline SVG noise texture.
 - [README (English)](https://github.com/aoxzh/jellyfin-liquid-glass#english):
   Install steps, compatibility matrix, FAQ and screenshots.
 - [README (简体中文)](https://github.com/aoxzh/jellyfin-liquid-glass#简体中文):
