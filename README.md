@@ -86,21 +86,27 @@ v4 的改法：
 ### 常见问题
 
 **问：装完之后界面没变化？**
+
 答：Jellyfin 的自定义 CSS 有缓存。先硬刷新（`Ctrl/Cmd + Shift + R`），再确认代码是贴在 **仪表盘 → 常规 → 品牌 → 自定义 CSS** 而不是别的地方；用 `@import` 方式时注意必须放在文件第一行。
 
 **问：播放视频时底部还有一条模糊的东西挡画面？**
+
 答：v4 已修复。如果你看到的是 v3 的效果，说明浏览器缓存了旧 CSS —— 清缓存或改用带版本号的 `@import` 地址。
 
 **问：会不会影响播放性能？**
+
 答：不会。整个文件只有 **3 条规则**真正启用实时模糊（玻璃配方 / 播放器控制胶囊 / 底部播放条），且都作用在小面积悬浮层上；卡片、按钮、列表全部使用半透明纯色 + 内描边，不参与模糊。过渡动画只动 `transform` / `opacity` / `background-color`，时长 ≤0.24s。
 
 **问：能只改配色不改布局吗？**
+
 答：可以。所有颜色都收在文件顶部的 `:root` 设计令牌里（`--lg-accent`、`--lg-panel`、`--lg-text` 等），改令牌即可换配色，不必动下面的规则。
 
 **问：支持浅色主题吗？**
+
 答：目前是深色单主题。`:root` 里声明了 `color-scheme: dark`，浅色版本在规划中。
 
 **问：图标变成乱码怎么办？**
+
 答：本主题已内置 2178 条 Material Icons 字形修复规则，正常情况下不会再出现。若仍有乱码，通常是别的自定义 CSS 覆盖了 `font-family`。
 
 ### 截图
@@ -217,21 +223,27 @@ Requires `backdrop-filter` support (Chrome 76+, Safari 9+, Firefox 103+). Browse
 ### FAQ
 
 **The UI didn't change after I installed it.**
+
 Jellyfin caches custom CSS. Hard-refresh first (`Ctrl/Cmd + Shift + R`), confirm the code is in **Dashboard → General → Branding → Custom CSS**, and if you use `@import` make sure it is the very first line of the box.
 
 **There is still a blurry bar covering the bottom of the video while playing.**
+
 That is the v3 behaviour, fixed in v4. If you still see it, your browser is serving cached CSS — clear the cache or switch to a versioned `@import` URL.
 
 **Does it hurt playback performance?**
+
 No. Only **three rules** in the file enable live blur (the glass recipe, the player control capsule and the audio now-playing bar), and all three apply to small floating surfaces. Cards, buttons and lists are translucent solids with an inner stroke and never blur. Animations only touch `transform`, `opacity` and `background-color`, with durations ≤0.24s.
 
 **Can I change the colours without touching the layout?**
+
 Yes. Every colour lives in the `:root` design tokens at the top of the file (`--lg-accent`, `--lg-panel`, `--lg-text`, …). Override the tokens and leave the rules alone.
 
 **Is there a light theme?**
+
 Not yet. The theme declares `color-scheme: dark`; a light variant is planned.
 
 **Icons render as garbage characters.**
+
 The theme ships 2178 Material Icons glyph rules that fix this. If it still happens, another custom CSS file is probably overriding `font-family`.
 
 ### Screenshots
