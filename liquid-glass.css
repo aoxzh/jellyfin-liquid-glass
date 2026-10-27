@@ -1,40 +1,75 @@
 /* ==========================================================================
-   Liquid Glass — Jellyfin 12.x theme (v3, 性能优先版)
-   iOS 27 "Liquid Glass" 风格。性能策略(参照 ElegantFin 等主流主题):
-   - backdrop-filter 仅用于 4 类悬浮层(顶栏/抽屉/弹窗/登录卡), 半径 ≤16px
-   - 卡片/按钮/列表一律用半透明纯色, 不做实时模糊
-   - 短过渡(≤0.22s), 小半径投影, 悬停只做位移不做图片缩放
-   - 尊重 safe-area 与系统无障碍设置(且绝不动弹窗动画, 避免卡死)
+   Liquid Glass — Jellyfin 主题 (v4)
+   iOS 26 "Liquid Glass" 设计语言:分层玻璃、镜面高光、同心圆角、内容自适应色调。
+
+   性能策略(与 v3 一致, 只是把玻璃做得更"厚"而不是更多):
+   - backdrop-filter 只出现在 5 类悬浮层(顶栏/抽屉/弹窗/登录卡/播放器控制条),
+     且每个都是小面积元素; 半径 ≤22px
+   - 卡片/按钮/列表一律用半透明纯色 + 内描边高光, 不做实时模糊
+   - 过渡 ≤0.24s, 只动 transform / opacity / background-color
+   - 尊重 safe-area、prefers-reduced-transparency / -motion / -contrast
    ========================================================================== */
 
+/* ---------- 设计令牌 ---------- */
+
 :root {
-    --lg-glass-low: rgba(255, 255, 255, 0.07);
+    color-scheme: dark;
+
+    /* 玻璃层 */
+    --lg-glass-low: rgba(255, 255, 255, 0.055);
     --lg-glass-mid: rgba(255, 255, 255, 0.1);
     --lg-glass-high: rgba(255, 255, 255, 0.16);
-    --lg-panel: rgba(13, 17, 30, 0.82);
-    --lg-panel-solid: rgba(15, 20, 34, 0.92);
+    --lg-panel: rgba(13, 17, 30, 0.74);
+    --lg-panel-solid: rgba(13, 17, 30, 0.95);
+    --lg-scrim: rgba(4, 6, 12, 0.55);
+
+    /* 描边与镜面高光(玻璃"厚度"的来源) */
     --lg-stroke: rgba(255, 255, 255, 0.16);
-    --lg-stroke-soft: rgba(255, 255, 255, 0.09);
-    --lg-text: rgba(255, 255, 255, 0.92);
-    --lg-text-dim: rgba(255, 255, 255, 0.62);
+    --lg-stroke-soft: rgba(255, 255, 255, 0.085);
+    --lg-hi-strong: rgba(255, 255, 255, 0.34);
+    --lg-hi: rgba(255, 255, 255, 0.2);
+    --lg-hi-faint: rgba(255, 255, 255, 0.08);
+
+    /* 文本 */
+    --lg-text: rgba(255, 255, 255, 0.94);
+    --lg-text-dim: rgba(255, 255, 255, 0.6);
+    --lg-text-faint: rgba(255, 255, 255, 0.4);
+
+    /* 强调色 */
     --lg-accent: #0a84ff;
     --lg-accent-2: #64d2ff;
     --lg-accent-3: #bf5af2;
-    /* 单位规范: 布局基准 rem; 999px 为胶囊形惯例写法(效果等同 50% 大半径) */
+    --lg-accent-warm: #ff9f0a;
+    --lg-accent-grad: linear-gradient(135deg, #0a84ff 0%, #3f6bff 48%, #bf5af2 100%);
+
+    /* 圆角:同心圆角体系(子元素 = 父级 - 内边距) */
+    --lg-radius-xs: 0.5rem;
     --lg-radius-sm: 0.75rem;
     --lg-radius-card: 1.125rem;
     --lg-radius-panel: 1.5rem;
+    --lg-radius-xl: 1.875rem;
     --lg-radius-pill: 999px;
-    --lg-shadow-1: 0 4px 14px rgba(0, 0, 0, 0.3);
-    --lg-shadow-2: 0 10px 28px rgba(0, 0, 0, 0.42);
+
+    /* 阴影:环境光 + 接触阴影, 避免大面积扩散 */
+    --lg-shadow-1: 0 2px 6px rgba(0, 0, 0, 0.22), 0 8px 22px -10px rgba(0, 0, 0, 0.5);
+    --lg-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.3), 0 18px 44px -16px rgba(0, 0, 0, 0.62);
+    --lg-shadow-3: 0 8px 20px rgba(0, 0, 0, 0.36), 0 32px 72px -22px rgba(0, 0, 0, 0.72);
+
+    /* 玻璃内高光组合(顶部 1px 亮边 + 一圈细描边) */
+    --lg-inset-hi: inset 0 1px 0 var(--lg-hi), inset 0 0 0 1px var(--lg-stroke-soft);
+
     --lg-ease: cubic-bezier(0.22, 1, 0.36, 1);
-    /* 单位规范: 布局基准用 rem, 组件内随字号缩放的热区用 em, 滤镜半径用 px */
+    --lg-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* 尺寸 */
     --lg-content-max: 46rem;
     --lg-tap-target: 2.75em;
-    --lg-blur: blur(16px) saturate(160%);
+    --lg-blur: blur(18px) saturate(180%);
+    --lg-blur-strong: blur(26px) saturate(190%);
+    --lg-blur-osd: blur(20px) saturate(175%);
 }
 
-/* ---------- 基底:极光渐变(桌面端 fixed 一次性合成,滚动不repaint) ---------- */
+/* ---------- 基底:极光背景 ---------- */
 
 html {
     background: #05070d;
@@ -42,13 +77,30 @@ html {
 
 body {
     background:
-        radial-gradient(110vmax 85vmax at 85% -10%, rgba(10, 132, 255, 0.5), transparent 58%),
-        radial-gradient(95vmax 75vmax at -15% 110%, rgba(191, 90, 242, 0.42), transparent 58%),
-        radial-gradient(70vmax 60vmax at 110% 85%, rgba(100, 210, 255, 0.32), transparent 62%),
-        linear-gradient(160deg, #070b16 0%, #0b1428 45%, #080b18 100%) !important;
+        radial-gradient(78vmax 60vmax at 82% -12%, rgba(10, 132, 255, 0.5), transparent 60%),
+        radial-gradient(66vmax 54vmax at -12% 8%, rgba(191, 90, 242, 0.34), transparent 62%),
+        radial-gradient(72vmax 62vmax at 108% 82%, rgba(100, 210, 255, 0.26), transparent 64%),
+        radial-gradient(52vmax 42vmax at 18% 108%, rgba(255, 159, 10, 0.16), transparent 66%),
+        linear-gradient(160deg, #070b16 0%, #0b1428 46%, #080b18 100%) !important;
     background-attachment: fixed !important;
     color: var(--lg-text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable", "Segoe UI",
+        "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    font-feature-settings: "kern" 1, "liga" 1, "cv11" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 极细颗粒:一个静态 fixed 层, 不参与滚动重绘, 让玻璃与渐变有"实体感" */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    pointer-events: none;
+    opacity: 0.022;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
 }
 
 /* 页面容器透出底色 */
@@ -59,11 +111,26 @@ body {
 #itemDetailPage,
 .dashboardDocument,
 .fullscreenDocument,
-.backgroundContainer {
+.backgroundContainer,
+#videoOsdPage,
+.videoOsdPage {
     background: transparent !important;
 }
 
-/* ---------- 悬浮层统一玻璃配方(仅这 4 类, 模糊半径 16px) ---------- */
+/* 播放器页自身铺纯黑(视频四周留黑边), 避免极光背景从画面缝隙里透出来 */
+.videoOsdPage,
+#videoOsdPage {
+    background: #000 !important;
+}
+
+::selection {
+    background: rgba(10, 132, 255, 0.42);
+    color: #fff;
+}
+
+/* ==========================================================================
+   玻璃配方 —— 统一在 5 类悬浮层上使用
+   ========================================================================== */
 
 .skinHeader,
 .mainDrawer .scrollContainer,
@@ -81,7 +148,8 @@ body {
 .nowPlayingContextMenu,
 .filterDialog,
 .manualLoginForm,
-.visualLoginForm {
+.visualLoginForm,
+.upNextDialog {
     backdrop-filter: var(--lg-blur);
     -webkit-backdrop-filter: var(--lg-blur);
 }
@@ -94,10 +162,27 @@ body {
     background: transparent !important;
 }
 
-.skinHeader {
-    background: linear-gradient(180deg, rgba(9, 13, 24, 0.72), rgba(9, 13, 24, 0.35)) !important;
+/* 注意: 播放器页会把 .osdHeader 加在 .skinHeader 上, 那里必须保持透明,
+   否则视频顶部会多出一条实底横条。:not() 同时提高优先级, 覆盖全局规则。 */
+.skinHeader:not(.osdHeader) {
+    background:
+        linear-gradient(180deg, rgba(9, 13, 24, 0.62), rgba(9, 13, 24, 0.24)) !important;
     border-bottom: 1px solid var(--lg-stroke-soft);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 30px -18px rgba(0, 0, 0, 0.8);
     padding-top: env(safe-area-inset-top, 0);
+    position: relative;
+    isolation: isolate;
+}
+
+/* 顶栏镜面高光: 一条自上而下衰减的柔光, 让玻璃"有弧度" */
+.skinHeader:not(.osdHeader)::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 62%;
+    background: linear-gradient(180deg, var(--lg-hi-faint), transparent);
+    pointer-events: none;
+    border-radius: inherit;
 }
 
 .headerTabs {
@@ -111,17 +196,31 @@ body {
     padding: 0.35em 1em;
     min-height: 2em;
     font-weight: 500;
-    transition: background-color 0.2s var(--lg-ease);
+    color: var(--lg-text-dim);
+    transition: background-color 0.2s var(--lg-ease), color 0.2s var(--lg-ease);
 }
 
 .headerTabs .emby-tab-button.emby-tab-button-active,
 .headerTabs .emby-tab-button:hover {
     background: var(--lg-glass-high);
+    box-shadow: var(--lg-inset-hi);
     color: #fff;
+}
+
+.headerTabs .emby-tab-button.emby-tab-button-active {
+    background: linear-gradient(135deg, rgba(10, 132, 255, 0.42), rgba(191, 90, 242, 0.28));
+    box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 0 0 1px rgba(120, 170, 255, 0.22);
 }
 
 .pageTitle {
     font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.headerButton,
+.paper-icon-button-light.headerButton {
+    border-radius: 50%;
+    color: var(--lg-text);
 }
 
 /* ---------- 侧边抽屉 ---------- */
@@ -136,15 +235,17 @@ body {
 .mainDrawer-scrollContainer {
     background: var(--lg-panel);
     border-right: 1px solid var(--lg-stroke-soft);
+    box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.03), 24px 0 60px -30px rgba(0, 0, 0, 0.9);
     padding-top: env(safe-area-inset-top, 0);
     padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .navMenuOption {
-    border-radius: 14px;
+    border-radius: 0.875rem;
     margin: 2px 10px;
     min-height: var(--lg-tap-target);
-    transition: background-color 0.18s var(--lg-ease);
+    color: var(--lg-text);
+    transition: background-color 0.18s var(--lg-ease), color 0.18s var(--lg-ease);
 }
 
 .navMenuOption:hover {
@@ -153,8 +254,9 @@ body {
 
 .navMenuOption.navMenuOption-selected,
 .navMenuOption:active {
-    background: linear-gradient(120deg, rgba(10, 132, 255, 0.34), rgba(100, 210, 255, 0.18));
-    box-shadow: inset 0 0 0 1px rgba(100, 210, 255, 0.28);
+    background: linear-gradient(120deg, rgba(10, 132, 255, 0.36), rgba(100, 210, 255, 0.16));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 0 1px rgba(100, 210, 255, 0.26);
+    color: #fff;
 }
 
 .navMenuOption .material-icons,
@@ -162,7 +264,9 @@ body {
     color: var(--lg-accent-2);
 }
 
-/* ---------- 卡片(无实时模糊, 纯色半透明) ---------- */
+/* ==========================================================================
+   卡片 —— 无实时模糊, 用"内高光 + 双层阴影"做出玻璃厚度
+   ========================================================================== */
 
 .card {
     border-radius: var(--lg-radius-card);
@@ -172,25 +276,45 @@ body {
 .cardBackdrop {
     border-radius: var(--lg-radius-card);
     background: var(--lg-glass-low);
-    box-shadow: var(--lg-shadow-1);
-    transition: transform 0.2s var(--lg-ease), box-shadow 0.2s var(--lg-ease);
+    box-shadow: inset 0 0 0 1px var(--lg-stroke-soft), var(--lg-shadow-1);
+    transition: transform 0.22s var(--lg-ease), box-shadow 0.22s var(--lg-ease);
+    will-change: transform;
 }
 
 .cardImageContainer,
 .cardImageIcon {
-    border-radius: calc(var(--lg-radius-card) - 4px);
+    border-radius: calc(var(--lg-radius-card) - 5px);
     overflow: hidden;
+}
+
+/* 卡面顶部的一道柔光, 模拟玻璃反光(纯渐变, 不产生额外合成层) */
+.cardImageContainer::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 45%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), transparent);
+    opacity: 0;
+    transition: opacity 0.22s var(--lg-ease);
+    pointer-events: none;
+}
+
+.card:hover .cardImageContainer::after,
+.card:focus .cardImageContainer::after {
+    opacity: 1;
 }
 
 .card:hover .cardBox,
 .card:focus .cardBox,
 .cardBox:focus-within {
-    transform: translateY(-4px);
-    box-shadow: var(--lg-shadow-2), 0 0 0 1px rgba(100, 210, 255, 0.3);
+    transform: translateY(-5px);
+    box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 0 0 1px rgba(160, 200, 255, 0.26),
+        var(--lg-shadow-2), 0 0 30px -12px rgba(10, 132, 255, 0.5);
 }
 
 .cardText {
     color: var(--lg-text);
+    letter-spacing: -0.005em;
 }
 
 .cardText-secondary,
@@ -200,6 +324,7 @@ body {
 
 .cardFooter {
     min-height: 3.2em;
+    padding-top: 0.45em;
 }
 
 /* 进度条 */
@@ -207,11 +332,13 @@ body {
 .cardProgressContainer {
     border-radius: var(--lg-radius-pill);
     overflow: hidden;
+    background: rgba(255, 255, 255, 0.16);
 }
 
 .itemProgressBarForeground,
 .cardProgress {
     background: linear-gradient(90deg, var(--lg-accent), var(--lg-accent-2));
+    box-shadow: 0 0 10px rgba(100, 210, 255, 0.55);
 }
 
 /* 角标 */
@@ -222,7 +349,7 @@ body {
     border-radius: var(--lg-radius-pill);
     color: #fff;
     font-weight: 600;
-    box-shadow: 0 3px 10px rgba(10, 132, 255, 0.4);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 3px 10px rgba(10, 132, 255, 0.42);
 }
 
 /* ---------- 分区标题 ---------- */
@@ -230,6 +357,7 @@ body {
 .sectionTitle,
 .homeSectionTitle {
     font-weight: 700;
+    letter-spacing: -0.012em;
     color: var(--lg-text);
 }
 
@@ -238,38 +366,55 @@ body {
     border-radius: var(--lg-radius-pill);
 }
 
-/* ---------- 按钮体系 ---------- */
+/* ==========================================================================
+   按钮体系
+   ========================================================================== */
 
 .emby-button,
 .raised,
 .paper-icon-button-light,
 .fab {
-    transition: background-color 0.18s var(--lg-ease), box-shadow 0.18s var(--lg-ease);
+    transition: background-color 0.18s var(--lg-ease), box-shadow 0.18s var(--lg-ease),
+        transform 0.18s var(--lg-ease);
 }
 
 .emby-button {
     border-radius: var(--lg-radius-sm) !important;
     background: var(--lg-glass-mid);
-    box-shadow: inset 0 0 0 1px var(--lg-stroke-soft);
+    box-shadow: var(--lg-inset-hi);
     color: var(--lg-text);
     font-weight: 600;
+    letter-spacing: -0.005em;
     min-height: var(--lg-tap-target);
 }
 
 .emby-button:hover,
 .emby-button:focus {
     background: var(--lg-glass-high);
+    box-shadow: inset 0 1px 0 var(--lg-hi-strong), inset 0 0 0 1px var(--lg-stroke);
 }
 
-/* 主按钮:胶囊渐变 */
+.emby-button:active {
+    transform: scale(0.985);
+}
+
+/* 主按钮:胶囊渐变 + 顶部高光 */
 .button-submit,
 .emby-button.button-submit,
 .btnPlay,
 .emby-button-accent {
     border-radius: var(--lg-radius-pill) !important;
-    background: linear-gradient(135deg, var(--lg-accent), #0066d6) !important;
-    box-shadow: 0 6px 18px rgba(10, 132, 255, 0.4) !important;
+    background: var(--lg-accent-grad) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+        0 6px 20px -6px rgba(10, 132, 255, 0.62) !important;
     color: #fff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.button-submit:hover,
+.btnPlay:hover {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+        0 10px 26px -8px rgba(10, 132, 255, 0.78) !important;
 }
 
 /* 圆形图标按钮 */
@@ -285,10 +430,23 @@ body {
 .paper-icon-button-light:hover,
 .paper-icon-button-light:focus {
     background: var(--lg-glass-high);
+    box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 0 0 1px var(--lg-stroke);
     color: #fff;
 }
 
-/* ---------- 设置页:iOS 分组列表 ---------- */
+.paper-icon-button-light:active {
+    transform: scale(0.94);
+}
+
+/* 浮动操作按钮 */
+.fab {
+    background: var(--lg-accent-grad) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 10px 26px -8px rgba(10, 132, 255, 0.7) !important;
+}
+
+/* ==========================================================================
+   设置页: iOS 分组内嵌列表
+   ========================================================================== */
 
 .userPreferencesPage .readOnlyContent,
 .standalonePage .readOnlyContent {
@@ -300,7 +458,7 @@ body {
 .userPreferencesPage .verticalSection {
     background: var(--lg-panel);
     border-radius: var(--lg-radius-card);
-    box-shadow: inset 0 0 0 1px var(--lg-stroke-soft), var(--lg-shadow-1);
+    box-shadow: var(--lg-inset-hi), var(--lg-shadow-1);
     overflow: hidden;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
@@ -316,6 +474,12 @@ body {
     font-weight: 500;
 }
 
+/* 分隔线只画在文字起点之后(iOS 分组列表的做法) */
+.emby-button.listItem-border + .emby-button.listItem-border,
+.verticalSection .listItem-border:not(:first-child) {
+    box-shadow: inset 0 1px 0 var(--lg-stroke-soft) !important;
+}
+
 .verticalSection > .emby-button.listItem-border:hover,
 .emby-button.listItem-border:hover,
 .emby-button.listItem-border:focus {
@@ -327,7 +491,15 @@ body {
     color: var(--lg-accent-2);
 }
 
-/* ---------- 输入控件 ---------- */
+.verticalSectionHeader {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--lg-text);
+}
+
+/* ==========================================================================
+   输入控件
+   ========================================================================== */
 
 .emby-input,
 .emby-textarea,
@@ -337,14 +509,20 @@ body {
     border-radius: var(--lg-radius-sm) !important;
     color: var(--lg-text) !important;
     min-height: 2.6em;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
     transition: border-color 0.18s var(--lg-ease), box-shadow 0.18s var(--lg-ease);
+}
+
+.emby-input::placeholder,
+.emby-textarea::placeholder {
+    color: var(--lg-text-faint);
 }
 
 .emby-input:focus,
 .emby-textarea:focus,
 .emby-select:focus {
     border-color: var(--lg-accent) !important;
-    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.3) !important;
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.32), inset 0 1px 2px rgba(0, 0, 0, 0.18) !important;
     outline: none;
 }
 
@@ -358,7 +536,34 @@ input[type="radio"] {
     accent-color: var(--lg-accent);
 }
 
-/* ---------- 详情页 ---------- */
+/* 滑块: 圆角轨道 + 发光拇指 */
+.mdl-slider-background-flex,
+.mdl-slider-background-upper {
+    border-radius: var(--lg-radius-pill) !important;
+    background: rgba(255, 255, 255, 0.22) !important;
+}
+
+.mdl-slider-background-lower {
+    border-radius: var(--lg-radius-pill) !important;
+    background-color: var(--lg-accent) !important;
+    box-shadow: 0 0 10px rgba(10, 132, 255, 0.55);
+}
+
+.positionSlider,
+.sliderBubble,
+.osdPositionSlider {
+    border-radius: var(--lg-radius-pill);
+}
+
+.sliderBubble {
+    background: var(--lg-panel) !important;
+    box-shadow: var(--lg-inset-hi), var(--lg-shadow-2);
+    color: var(--lg-text);
+}
+
+/* ==========================================================================
+   详情页
+   ========================================================================== */
 
 .detailPageWrapper {
     background: transparent;
@@ -367,21 +572,23 @@ input[type="radio"] {
 .itemBackdrop,
 .detailPagePrimaryBackdrop,
 .backdropImage {
-    mask-image: linear-gradient(180deg, #000 52%, transparent 100%);
-    -webkit-mask-image: linear-gradient(180deg, #000 52%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 46%, rgba(0, 0, 0, 0.45) 72%, transparent 100%);
+    -webkit-mask-image: linear-gradient(180deg, #000 46%, rgba(0, 0, 0, 0.45) 72%, transparent 100%);
 }
 
 .detailImageContainer .detailImage,
 .itemDetailImage,
 .detailImage {
     border-radius: var(--lg-radius-panel);
-    box-shadow: var(--lg-shadow-2);
+    box-shadow: inset 0 0 0 1px var(--lg-stroke-soft), var(--lg-shadow-2);
 }
 
 .itemName,
 .detailPageTitle,
 .parentName {
     font-weight: 800;
+    letter-spacing: -0.022em;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
 }
 
 .itemRating,
@@ -391,7 +598,7 @@ input[type="radio"] {
 .detailSection .mediaInfoItem {
     border-radius: var(--lg-radius-pill);
     background: var(--lg-glass-low);
-    box-shadow: inset 0 0 0 1px var(--lg-stroke-soft);
+    box-shadow: inset 0 1px 0 var(--lg-hi-faint), inset 0 0 0 1px var(--lg-stroke-soft);
     padding: 0.25em 0.8em;
 }
 
@@ -400,7 +607,14 @@ input[type="radio"] {
     border-radius: var(--lg-radius-card);
 }
 
-/* ---------- 弹窗(玻璃悬浮层; 不加任何过渡/动画覆盖, 防止破坏开关联动) ---------- */
+.peopleCard img {
+    box-shadow: inset 0 0 0 1px var(--lg-stroke-soft), var(--lg-shadow-1);
+}
+
+/* ==========================================================================
+   弹窗 / 动作表 / 右键菜单
+   (只改静态外观, 不覆盖任何 transition/animation —— 弹窗开关靠这些联动)
+   ========================================================================== */
 
 .dialog,
 .formDialog,
@@ -415,8 +629,22 @@ input[type="radio"] {
 .filterDialog {
     background: var(--lg-panel) !important;
     border-radius: var(--lg-radius-panel) !important;
-    box-shadow: var(--lg-shadow-2), inset 0 0 0 1px var(--lg-stroke-soft) !important;
+    box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 0 0 1px var(--lg-stroke-soft),
+        var(--lg-shadow-3) !important;
     color: var(--lg-text);
+}
+
+/* 弹窗正文层再叠一层更实的底色, 保证文字对比度(玻璃只做边缘氛围) */
+.dialog,
+.formDialog,
+.confirmDialog,
+.prompt,
+.filterDialog {
+    background: linear-gradient(180deg, rgba(20, 26, 42, 0.86), rgba(11, 15, 26, 0.92)) !important;
+}
+
+.dialogBackdrop {
+    background: rgba(3, 5, 10, 0.62);
 }
 
 .dialogHeader,
@@ -427,11 +655,12 @@ input[type="radio"] {
 .dialogHeaderTitle,
 .formDialogHeaderTitle {
     font-weight: 700;
+    letter-spacing: -0.012em;
 }
 
 .actionSheetMenuItem,
 .contextMenuItem {
-    border-radius: 12px;
+    border-radius: 0.75rem;
     min-height: var(--lg-tap-target);
     transition: background-color 0.15s var(--lg-ease);
 }
@@ -441,12 +670,14 @@ input[type="radio"] {
     background: var(--lg-glass-mid);
 }
 
-/* ---------- 通用列表 ---------- */
+/* ==========================================================================
+   通用列表
+   ========================================================================== */
 
 .paperList {
     border-radius: var(--lg-radius-card);
     background: var(--lg-panel);
-    box-shadow: inset 0 0 0 1px var(--lg-stroke-soft), var(--lg-shadow-1);
+    box-shadow: var(--lg-inset-hi), var(--lg-shadow-1);
     overflow: hidden;
 }
 
@@ -475,7 +706,7 @@ input[type="radio"] {
 .alphaPicker {
     background: var(--lg-panel);
     border-radius: var(--lg-radius-pill);
-    box-shadow: inset 0 0 0 1px var(--lg-stroke-soft);
+    box-shadow: inset 0 0 0 1px var(--lg-stroke-soft), var(--lg-shadow-1);
     margin-right: 0.4em;
 }
 
@@ -492,21 +723,93 @@ input[type="radio"] {
     color: #fff;
 }
 
-/* ---------- 播放器 ---------- */
+/* ==========================================================================
+   播放器 OSD —— v4 核心修复
+   --------------------------------------------------------------------------
+   官方结构(10.9 / 10.10 / 12.x 一致):
+     .videoOsdBottom   position:fixed; bottom:0; 左右通栏; padding-top:7.5em;
+                       背景是从透明到黑的渐变遮罩; pointer-events:none
+       .osdControls    真正的控制区; pointer-events:all
+   隐藏方式: 先加 .videoOsdBottom-hidden(opacity:0, 0.3s 过渡),
+             过渡结束后再加 .hide(display:none)。
 
-.videoOsdBottom,
-.upNextDialog,
-.nowPlayingBar {
-    background: rgba(9, 12, 22, 0.72) !important;
-    backdrop-filter: var(--lg-blur);
-    -webkit-backdrop-filter: var(--lg-blur);
-    border-top: 1px solid var(--lg-stroke-soft);
+   v3 的错误: 给 .videoOsdBottom 整条加了 rgba(9,12,22,.72) + blur(16px)。
+   于是原本"透明到黑"的 7.5em 渐变区变成一块实心毛玻璃,
+   在 900px 高的视口上从 y=607 一直糊到底 —— 硬边横切画面下三分之一。
+
+   v4 的做法:
+     1. 通栏条(.videoOsdBottom)恢复为纯遮罩: 透明背景 + 很矮很淡的底部渐变,
+        没有任何硬边, 也没有 backdrop-filter;
+     2. 玻璃只做在 .osdControls 这一块"浮起来的控制胶囊"上:
+        居中有最大宽度、圆角、内高光、四周留白 —— 视频画面在它周围仍然可见;
+     3. 隐藏时额外撤掉 backdrop-filter, 规避部分 WebKit/Safari 在 opacity:0
+        时仍保留模糊层的已知问题(Chromium 表现正常, 但 iOS 客户端会中招)。
+   ========================================================================== */
+
+.videoOsdBottom {
+    /* 通栏容器只负责定位与淡出, 不再画任何实心玻璃 */
+    background: linear-gradient(0deg, rgba(3, 5, 10, 0.42) 0%, rgba(3, 5, 10, 0.14) 34%, transparent 62%) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-top: 0 !important;
+    /* 只留一点点上方余量, 让遮罩和胶囊贴着画面底部, 不再横切 1/3 屏幕 */
+    padding-top: 1.5em;
+    padding-bottom: max(1em, env(safe-area-inset-bottom, 0px));
+    align-items: flex-end;
 }
 
-.upNextDialog {
-    border-radius: var(--lg-radius-panel) !important;
-    border-top: none;
-    box-shadow: var(--lg-shadow-2);
+/* 控制区 = 浮动玻璃胶囊 */
+.videoOsdBottom .osdControls {
+    position: relative;
+    flex-grow: 1;
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 0.8em 1.05em 0.85em;
+    border-radius: var(--lg-radius-panel);
+    background: linear-gradient(180deg, rgba(24, 30, 48, 0.62), rgba(8, 11, 20, 0.74));
+    backdrop-filter: var(--lg-blur-osd);
+    -webkit-backdrop-filter: var(--lg-blur-osd);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.075),
+        0 18px 46px -18px rgba(0, 0, 0, 0.85), 0 2px 8px rgba(0, 0, 0, 0.35);
+    isolation: isolate;
+}
+
+/* 胶囊顶部镜面高光: 一条 40% 高度内衰减的柔光 */
+.videoOsdBottom .osdControls::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 46%;
+    border-radius: var(--lg-radius-panel) var(--lg-radius-panel) 40% 40% / var(--lg-radius-panel) var(--lg-radius-panel) 100% 100%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), transparent);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* 隐藏态: 撤掉模糊(仅模糊, 背景仍随 opacity 一起淡出, 保持过渡观感) */
+.videoOsdBottom.videoOsdBottom-hidden .osdControls,
+.videoOsdBottom.videoOsdBottom-hidden {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.videoOsdBottom .osdControls,
+.videoOsdBottom .osdControls::before {
+    transition: background-color 0.3s var(--lg-ease);
+}
+
+/* 顶部 OSD 头: 官方自带渐变遮罩, 这里只去掉主题误加的实底与分隔线 */
+.skinHeader.osdHeader,
+.skinHeader-withBackground.osdHeader {
+    background: linear-gradient(180deg, rgba(8, 10, 16, 0.72), rgba(8, 10, 16, 0.28) 62%, transparent) !important;
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.skinHeader.osdHeader::after {
+    content: none !important;
 }
 
 .osdHeader,
@@ -514,19 +817,87 @@ input[type="radio"] {
     color: var(--lg-text);
 }
 
-.positionSlider,
-.sliderBubble {
-    border-radius: var(--lg-radius-pill);
+.videoOsdBottom .osdTitle {
+    font-weight: 700;
+    letter-spacing: -0.012em;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
 }
 
-/* ---------- 登录页 ---------- */
+.videoOsdBottom .osdSecondaryMediaInfo,
+.videoOsdBottom .osdPositionText,
+.videoOsdBottom .osdDurationText,
+.videoOsdBottom .endsAtText {
+    color: var(--lg-text-dim);
+    font-variant-numeric: tabular-nums;
+}
+
+.videoOsdBottom .buttons .paper-icon-button-light {
+    background: transparent;
+    box-shadow: none;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.videoOsdBottom .buttons .paper-icon-button-light:hover,
+.videoOsdBottom .buttons .paper-icon-button-light:focus {
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+.videoOsdBottom .btnPause {
+    background: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+}
+
+.videoOsdBottom .btnPause:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 章节缩略图气泡 */
+.chapterThumbContainer {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px var(--lg-stroke), var(--lg-shadow-2);
+}
+
+.chapterThumbText {
+    text-shadow: 0 0 20px #000, 0 0 6px #000;
+}
+
+/* 播放器内的其它浮层 */
+.upNextDialog {
+    border-radius: var(--lg-radius-panel) !important;
+    background: var(--lg-panel) !important;
+    box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 0 0 1px var(--lg-stroke-soft), var(--lg-shadow-3) !important;
+}
+
+/* 音量 / 亮度 / 跳转提示 */
+.osdVolumeSliderContainer .mdl-slider-background-lower,
+.iconOsdProgressInner {
+    background-color: var(--lg-accent-2) !important;
+}
+
+/* ---------- 底部正在播放条(音频) ---------- */
+
+.nowPlayingBar {
+    background: var(--lg-panel) !important;
+    backdrop-filter: var(--lg-blur);
+    -webkit-backdrop-filter: var(--lg-blur);
+    border-top: 1px solid var(--lg-stroke-soft);
+    box-shadow: inset 0 1px 0 var(--lg-hi-faint), 0 -14px 40px -24px rgba(0, 0, 0, 0.9);
+}
+
+/* ==========================================================================
+   登录页
+   ========================================================================== */
 
 .manualLoginForm,
 .visualLoginForm {
-    background: var(--lg-panel);
-    border-radius: var(--lg-radius-panel);
-    box-shadow: var(--lg-shadow-2), inset 0 0 0 1px var(--lg-stroke-soft);
-    padding: 2em 1.8em;
+    background: linear-gradient(180deg, rgba(22, 28, 46, 0.68), rgba(10, 13, 24, 0.78));
+    border-radius: var(--lg-radius-xl);
+    box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 0 0 1px var(--lg-stroke-soft),
+        var(--lg-shadow-3), 0 0 80px -40px rgba(10, 132, 255, 0.7);
+    padding: 2.1em 1.9em;
     width: 340px;
     max-width: calc(100vw - 32px);
     margin-left: auto;
@@ -555,7 +926,9 @@ input[type="radio"] {
     border-radius: var(--lg-radius-card);
 }
 
-/* ---------- 仪表盘 ---------- */
+/* ==========================================================================
+   仪表盘
+   ========================================================================== */
 
 .dashboardDocument .content-primary,
 .content-primary {
@@ -565,14 +938,12 @@ input[type="radio"] {
 .dashboardDocument .visualCardBox {
     border-radius: var(--lg-radius-card);
     background: var(--lg-panel);
-    box-shadow: inset 0 0 0 1px var(--lg-stroke-soft);
+    box-shadow: var(--lg-inset-hi), var(--lg-shadow-1);
 }
 
-/* ---------- 杂项 ---------- */
-
-::selection {
-    background: rgba(10, 132, 255, 0.45);
-}
+/* ==========================================================================
+   杂项
+   ========================================================================== */
 
 ::-webkit-scrollbar {
     width: 9px;
@@ -582,25 +953,42 @@ input[type="radio"] {
 ::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.18);
     border-radius: var(--lg-radius-pill);
+    border: 2px solid transparent;
+    background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.34);
+    background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.card:focus .cardBox {
-    outline: none;
-    box-shadow: var(--lg-shadow-2), 0 0 0 2px var(--lg-accent-2);
-}
-
+/* 键盘 / 遥控器焦点环: 只在 :focus-visible 出现, 鼠标点击不闪 */
 .emby-button:focus,
 .paper-icon-button-light:focus,
-.emby-tab-button:focus {
+.emby-tab-button:focus,
+.card:focus .cardBox {
     outline: none;
+}
+
+.emby-button:focus-visible,
+.paper-icon-button-light:focus-visible,
+.emby-tab-button:focus-visible,
+.navMenuOption:focus-visible,
+.listItem:focus-visible,
+.emby-select:focus-visible,
+.emby-input:focus-visible,
+.card:focus-visible .cardBox {
+    outline: 2px solid var(--lg-accent-2);
+    outline-offset: 2px;
+}
+
+.card:focus .cardBox {
+    box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 0 0 1px rgba(160, 200, 255, 0.3),
+        var(--lg-shadow-2), 0 0 0 2px rgba(100, 210, 255, 0.5);
 }
 
 /* 图片淡入(仅透明度, 不做缩放, 避免重光栅化) */
@@ -638,7 +1026,8 @@ input[type="radio"] {
         --lg-radius-card: 1rem;
         --lg-radius-panel: 1.25rem;
         --lg-tap-target: 2.9em;
-        --lg-blur: blur(12px) saturate(150%);
+        --lg-blur: blur(14px) saturate(170%);
+        --lg-blur-osd: blur(16px) saturate(165%);
     }
 
     /* iOS Safari 对 background-attachment: fixed 的合成层处理有缺陷
@@ -646,12 +1035,13 @@ input[type="radio"] {
     body {
         background:
             radial-gradient(150vw 90vh at 80% -5%, rgba(10, 132, 255, 0.45), transparent 60%),
-            radial-gradient(130vw 80vh at -10% 105%, rgba(191, 90, 242, 0.4), transparent 60%),
+            radial-gradient(130vw 80vh at -10% 105%, rgba(191, 90, 242, 0.38), transparent 60%),
+            radial-gradient(90vw 60vh at 110% 60%, rgba(100, 210, 255, 0.24), transparent 64%),
             linear-gradient(160deg, #070b16 0%, #0b1428 50%, #080b18 100%) !important;
         background-attachment: scroll !important;
     }
 
-    .skinHeader {
+    .skinHeader:not(.osdHeader) {
         padding-left: max(0.4em, env(safe-area-inset-left, 0px));
         padding-right: max(0.4em, env(safe-area-inset-right, 0px));
     }
@@ -663,7 +1053,7 @@ input[type="radio"] {
 
     .manualLoginForm,
     .visualLoginForm {
-        padding: 1.5em 1.2em;
+        padding: 1.6em 1.25em;
     }
 
     .userPreferencesPage .readOnlyContent,
@@ -691,6 +1081,25 @@ input[type="radio"] {
         min-width: 1.6em;
         min-height: 1.6em;
     }
+
+    /* 播放器: 手机端控制胶囊贴边更近、内边距更小 */
+    .videoOsdBottom {
+        padding-top: 0.75em;
+        padding-bottom: max(0.6em, env(safe-area-inset-bottom, 0px));
+    }
+
+    .videoOsdBottom .osdControls {
+        padding: 0.65em 0.75em 0.7em;
+        border-radius: 1.15rem;
+    }
+
+    .videoOsdBottom .osdTitle {
+        font-size: 1em;
+    }
+
+    .videoOsdBottom .osdSecondaryMediaInfo {
+        font-size: 0.8em;
+    }
 }
 
 /* 触屏设备:点按目标 ≥44px(HIG) */
@@ -706,23 +1115,59 @@ input[type="radio"] {
         min-width: 2.9em;
         min-height: 2.9em;
     }
+
+    /* 触屏没有 hover, 卡面反光常亮会显脏 —— 只在按下的卡片上出现 */
+    .card:hover .cardImageContainer::after {
+        opacity: 0;
+    }
+
+    .card:active .cardImageContainer::after {
+        opacity: 1;
+    }
+
+    .card:hover .cardBox {
+        transform: none;
+    }
+
+    .card:active .cardBox {
+        transform: scale(0.985);
+    }
 }
 
 /* ==========================================================================
-   TV 布局
+   TV 布局 —— 十尺距离, 加大对比与焦点环
    ========================================================================== */
 
 .layout-tv {
-    --lg-blur: blur(12px) saturate(150%);
+    --lg-blur: blur(14px) saturate(170%);
+    --lg-text-dim: rgba(255, 255, 255, 0.72);
+}
+
+.layout-tv .card:focus .cardBox,
+.layout-tv .cardBox:focus-within {
+    transform: scale(1.06);
+    box-shadow: inset 0 1px 0 var(--lg-hi-strong), inset 0 0 0 2px var(--lg-accent-2),
+        var(--lg-shadow-2), 0 0 0 4px rgba(100, 210, 255, 0.28);
+}
+
+.layout-tv .emby-button:focus,
+.layout-tv .paper-icon-button-light:focus {
+    outline: 3px solid var(--lg-accent-2);
+    outline-offset: 3px;
+}
+
+.layout-tv .videoOsdBottom .osdControls {
+    max-width: 74rem;
+    padding: 1.1em 1.5em 1.2em;
 }
 
 /* ==========================================================================
-   无障碍:降低透明度(仅影响仅剩的玻璃层) / 减少动态效果(只关本主题的装饰性过渡,
-   绝不动 .dialog 等开关联动动画——避免弹窗流程卡死)
+   无障碍
    ========================================================================== */
 
+/* 降低透明度: 撤掉所有实时模糊, 换成实底 —— 播放器控制条同样处理 */
 @media (prefers-reduced-transparency: reduce) {
-    .skinHeader,
+    .skinHeader:not(.osdHeader),
     .mainDrawer .scrollContainer,
     .navDrawer .scrollContainer,
     .dialog,
@@ -730,15 +1175,25 @@ input[type="radio"] {
     .actionSheet,
     .manualLoginForm,
     .visualLoginForm,
-    .videoOsdBottom,
+    .videoOsdBottom .osdControls,
     .upNextDialog,
     .nowPlayingBar {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
         background: var(--lg-panel-solid) !important;
     }
+
+    .videoOsdBottom {
+        background: linear-gradient(0deg, rgba(0, 0, 0, 0.72) 0%, transparent 60%) !important;
+    }
+
+    body::after {
+        display: none;
+    }
 }
 
+/* 降低动态效果: 只关本主题的装饰性过渡,
+   绝不动 .dialog 等开关联动动画 —— 避免弹窗流程卡死 */
 @media (prefers-reduced-motion: reduce) {
     .cardBox,
     .emby-button,
@@ -753,8 +1208,47 @@ input[type="radio"] {
     .emby-input,
     .emby-textarea,
     .emby-select,
-    .cardImageContainer img {
+    .cardImageContainer img,
+    .cardImageContainer::after {
         transition: none !important;
+    }
+
+    .card:hover .cardBox,
+    .card:focus .cardBox,
+    .cardBox:focus-within {
+        transform: none;
+    }
+}
+
+/* 高对比度: 描边与文字更实 */
+@media (prefers-contrast: more) {
+    :root {
+        --lg-text: #fff;
+        --lg-text-dim: rgba(255, 255, 255, 0.82);
+        --lg-stroke-soft: rgba(255, 255, 255, 0.22);
+        --lg-stroke: rgba(255, 255, 255, 0.34);
+        --lg-panel: rgba(9, 12, 20, 0.94);
+    }
+
+    .videoOsdBottom .osdControls {
+        background: rgba(6, 8, 14, 0.9);
+    }
+}
+
+/* 不支持 backdrop-filter 的客户端: 直接给实底, 不要半透明糊成一团 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .skinHeader:not(.osdHeader),
+    .mainDrawer .scrollContainer,
+    .navDrawer .scrollContainer,
+    .dialog,
+    .formDialog,
+    .actionSheet,
+    .manualLoginForm,
+    .visualLoginForm,
+    .videoOsdBottom .osdControls,
+    .upNextDialog,
+    .nowPlayingBar {
+        background: var(--lg-panel-solid) !important;
     }
 }
 

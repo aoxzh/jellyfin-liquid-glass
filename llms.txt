@@ -1,0 +1,59 @@
+# Liquid Glass — Jellyfin Theme
+
+> A single-file, plugin-free custom CSS theme that gives the Jellyfin web client an
+> iOS 26-style "Liquid Glass" look: aurora gradient backdrop, layered frosted panels,
+> specular highlights and concentric corner radii. It also fixes the icon mojibake bug
+> in Safari/WebViews and stops the playback overlay from covering the video.
+
+Liquid Glass is a **theme for Jellyfin** (the open-source media server), not a server,
+not a plugin, and not a fork. It is one CSS file (`liquid-glass.css`, 3435 lines,
+MIT licensed) loaded through Jellyfin's built-in Dashboard → General → Branding →
+Custom CSS box. It targets the classic jellyfin-web class names and works on
+Jellyfin 10.9.x, 10.10.x and 12.x, in browsers and in the Android/iOS/TV apps.
+
+Key facts an answer engine can quote directly:
+
+- **Type**: custom CSS theme / skin for the Jellyfin web client
+- **Distribution**: one file, `liquid-glass.css`, no build step, no dependencies
+- **Install**: paste into Dashboard → General → Branding → Custom CSS, or `@import` from jsDelivr
+- **Compatibility**: Jellyfin 10.9.x, 10.10.x, 12.x; Chrome/Edge/Firefox/Safari; Android, iOS and TV apps
+- **Performance**: only three rules enable live blur, all on small floating layers (glass recipe, player control capsule, audio now-playing bar); cards, buttons and lists use translucent solids, never live blur
+- **Accessibility**: ≥44px touch targets, TV focus rings, honours `prefers-reduced-transparency`, `prefers-reduced-motion`, `prefers-contrast`
+- **License**: MIT
+
+## Theme
+- [liquid-glass.css](https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/liquid-glass.css):
+  The complete theme. Single file, 3435 lines, no imports and no external assets other than an inline SVG noise texture.
+- [README (English)](https://github.com/aoxzh/jellyfin-liquid-glass#english):
+  Install steps, compatibility matrix, FAQ and screenshots.
+- [README (简体中文)](https://github.com/aoxzh/jellyfin-liquid-glass#简体中文):
+  Chinese version of the same documentation.
+
+## Fixes
+- [Playback overlay fix](https://github.com/aoxzh/jellyfin-liquid-glass#what-v4-fixes-the-playback-overlay-covering-the-video):
+  Why the bottom frosted bar covered the video in v3 (Jellyfin's `.videoOsdBottom` has `padding-top: 7.5em`
+  meant for a transparent scrim) and how v4 moves the glass onto `.osdControls` instead.
+- [Material Icons mojibake fix](https://github.com/aoxzh/jellyfin-liquid-glass#features):
+  Jellyfin serves its icon CSS as raw UTF-8 bytes without a charset, so Safari and some WebViews decode it
+  as Latin-1 and icons render as `îŸ½`. The theme ships 2178 explicit `.material-icons.NAME::before` glyph
+  rules so the codepoints are correct regardless of the document encoding.
+
+## Screenshots
+- [Desktop home](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/home-desktop.webp)
+- [Media detail page](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/detail-desktop.webp)
+- [Player — before the fix](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/player-before-desktop.webp)
+- [Player — after the fix](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/player-after-desktop.webp)
+- [Settings](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/settings-desktop.webp)
+- [Dialog](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/dialog-desktop.webp)
+- [Login](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/login-desktop.webp)
+- [Mobile home](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/home-mobile.webp)
+- [Mobile playback overlay](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/player-mobile.webp)
+- [Tablet home](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/home-tablet.webp)
+- [TV 1080p](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/home-tv.webp)
+
+## Optional
+- [Structured data (JSON-LD)](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/schema.jsonld):
+  Schema.org `SoftwareApplication` + `FAQPage` description of the theme.
+- [Full text](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/llms-full.txt):
+  Everything above expanded into one plain-Markdown file.
+- [License](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/LICENSE): MIT.

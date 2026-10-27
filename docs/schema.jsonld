@@ -1,0 +1,115 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://github.com/aoxzh/jellyfin-liquid-glass#software",
+      "name": "Liquid Glass — Jellyfin Theme",
+      "alternateName": "jellyfin-liquid-glass",
+      "applicationCategory": "DesignApplication",
+      "applicationSubCategory": "Custom CSS theme for the Jellyfin web client",
+      "operatingSystem": "Web browser (Chrome, Edge, Firefox, Safari), Android, iOS, Android TV",
+      "softwareVersion": "4.0.0",
+      "license": "https://opensource.org/licenses/MIT",
+      "isAccessibleForFree": true,
+      "downloadUrl": "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/liquid-glass.css",
+      "codeRepository": "https://github.com/aoxzh/jellyfin-liquid-glass",
+      "programmingLanguage": "CSS",
+      "description": "A single-file, plugin-free custom CSS theme that gives the Jellyfin web client an iOS 26-style liquid glass look: aurora gradient backdrop, layered frosted panels, specular highlights and concentric corner radii. Version 4 fixes the playback overlay covering the video, and the theme also fixes Material Icons mojibake in Safari and WebViews.",
+      "featureList": [
+        "Aurora gradient background with four radial gradients over a deep-space linear base",
+        "Frosted glass confined to floating layers (header, drawer, dialogs, login card, player controls)",
+        "Concentric corner radius system",
+        "Capsule primary buttons with transform-only hover lift",
+        "iOS-style grouped inset lists on settings pages",
+        "Responsive layouts for phone, tablet, foldable, desktop and TV",
+        "Safe-area aware for notched devices",
+        "Honours prefers-reduced-transparency, prefers-reduced-motion and prefers-contrast",
+        "2178 explicit Material Icons glyph rules that fix icon mojibake in Safari and WebViews",
+        "Playback overlay reworked into a floating control capsule that does not cover the video"
+      ],
+      "softwareRequirements": "Jellyfin 10.9.x, 10.10.x or 12.x; a browser with backdrop-filter support",
+      "author": {
+        "@type": "Person",
+        "name": "aoxzh",
+        "url": "https://github.com/aoxzh"
+      },
+      "screenshot": [
+        "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/home-desktop.webp",
+        "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/detail-desktop.webp",
+        "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/player-after-desktop.webp",
+        "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/settings-desktop.webp"
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://github.com/aoxzh/jellyfin-liquid-glass#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Liquid Glass for Jellyfin?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Liquid Glass is a custom CSS theme (skin) for the Jellyfin web client. It replaces Jellyfin's flat dark UI with an iOS 26-style liquid glass look: an aurora gradient backdrop, layered frosted floating panels, specular highlights and concentric corner radii. The whole theme is a single file, liquid-glass.css, loaded through Jellyfin's built-in Custom CSS box. It requires no plugin, no server modification and no client rebuild."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I install the Liquid Glass theme in Jellyfin?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In Jellyfin go to Dashboard, then General, then Branding, then Custom CSS, and paste either the full contents of liquid-glass.css or this import line: @import url(\"https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@main/liquid-glass.css\"); Then save and hard-refresh the web client with Ctrl/Cmd + Shift + R. To pin a version, replace @main with a tag such as @v4.0.0."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why did the bottom frosted bar cover the video during playback?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Jellyfin's stock .videoOsdBottom is deliberately taller than its controls: it carries padding-top: 7.5em so that a transparent-to-black gradient scrim has room to fade out above the buttons. Version 3 of this theme replaced that transparent scrim with an opaque rgba(9,12,22,0.72) background plus blur(16px), which turned the 7.5em padding into a solid frosted block. Measured at 1440x900, the controls were 171px tall but the glass slab was 293px, covering the bottom third of the frame with a hard top edge. On a 390x844 phone it was 343px."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does version 4 fix the playback overlay?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Version 4 returns .videoOsdBottom to a pure scrim: a faint linear gradient with backdrop-filter: none, border-top: 0 and padding-top reduced to 1.5em. The glass is moved onto .osdControls, the element that actually holds the buttons, as a centred floating capsule capped at 62rem with 1.5rem radii. The hidden state .videoOsdBottom-hidden additionally disables backdrop-filter, because iOS/WebKit can keep a blur layer alive at opacity 0. Result: the overlay is 211px tall at 1440x900 instead of 293px, and 235px on a phone instead of 343px, with the bottom edge of the picture visible."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which Jellyfin versions does the theme support?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The theme targets the classic jellyfin-web class names and works on Jellyfin 10.9.x, 10.10.x and 12.x, including 12.x's newer .videoOsd-appBar safe-area rules. It applies to the web client in browsers (Chrome, Edge, Firefox, Safari) and to the Android, iOS and TV apps, which embed the same web client. Jellyfin 12's experimental React client uses different class names and is not targeted yet."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does the theme hurt playback or scrolling performance?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Only three rules in the file enable live blur: the shared glass recipe (header and drawer scroll containers, dialogs, login form, up-next dialog), the player control capsule, and the audio now-playing bar. All three apply to small floating surfaces. Cards, buttons and lists use translucent solids plus an inner stroke highlight and never trigger live blur, so scrolling does not re-sample the backdrop. Animations touch only transform, opacity and background-color, with durations of 0.24s or less."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does the theme fix Material Icons rendering as garbage characters?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Jellyfin serves its icon stylesheet as raw UTF-8 bytes without a charset declaration, so Safari and some WebViews decode it as Latin-1 and icons render as mojibake such as the characters shown as garbled Latin-1. The theme ships 2178 explicit .material-icons.NAME::before rules with ASCII escape-sequence codepoints, which resolve correctly regardless of document encoding."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I change the colours without editing the layout rules?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. All colours are declared as design tokens on :root at the top of liquid-glass.css, including --lg-accent, --lg-accent-2, --lg-accent-3, --lg-panel, --lg-glass-low, --lg-glass-mid, --lg-glass-high, --lg-text, --lg-text-dim and the --lg-stroke family. Overriding the tokens changes the palette without touching any of the layout rules below them."
+          }
+        }
+      ]
+    }
+  ]
+}

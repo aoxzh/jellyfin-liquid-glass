@@ -1,0 +1,461 @@
+# Liquid Glass — Jellyfin Theme — Complete Reference
+
+> A single-file, plugin-free custom CSS theme that gives the Jellyfin web client an
+> iOS 26-style "Liquid Glass" look, fixes the Material Icons mojibake bug in
+> Safari/WebViews, and stops the playback overlay from covering the video.
+
+This file contains the complete documentation in plain Markdown so an AI engine can
+answer questions about the project without crawling the HTML rendering of the README.
+Repository: https://github.com/aoxzh/jellyfin-liquid-glass
+
+---
+
+## What is Liquid Glass?
+
+Liquid Glass is a **custom CSS theme (a "skin") for the Jellyfin web client**. Jellyfin
+is an open-source media server; its web client is the React/TypeScript single-page app
+that runs in a browser or inside the Android, iOS and TV apps. Jellyfin lets an
+administrator inject arbitrary CSS through **Dashboard → General → Branding → Custom CSS**,
+and this project is that CSS.
+
+It is **not** a plugin, **not** a server modification, **not** a Docker image, and
+**not** a fork of Jellyfin. Installing it requires no shell access, no rebuild, and no
+restart. The entire theme is one file: `liquid-glass.css`.
+
+### One-sentence summary
+
+Liquid Glass restyles the Jellyfin web client with an aurora gradient background and
+frosted-glass floating chrome while keeping scrolling cheap, and in v4 it fixes the
+long-standing bug where the bottom playback overlay covered the video.
+
+### Design language
+
+The look follows Apple's "Liquid Glass" material introduced with iOS 26:
+
+- **Aurora backdrop** — four large radial gradients (blue, violet, cyan, warm amber)
+  composited over a deep-space linear gradient (`160deg`, `#070b16 → #0b1428 → #080b18`)
+- **Layered glass** — floating surfaces are translucent, blurred and edged with a
+  1px inner highlight that reads as the "thickness" of the material
+- **Specular highlights** — a `::before` layer at 46% height on the player capsule
+  simulates light falling on the top of the glass
+- **Concentric radii** — a child element's radius equals the parent's radius minus the
+  padding, so nested corners stay visually parallel
+- **Content-adaptive tinting** — panel colours are cool blue-grey so they read
+  correctly over both bright and dark artwork
+
+---
+
+## Who is it for?
+
+- People who find Jellyfin's default UI too utilitarian and want a more polished look
+- Home-theatre setups on a TV or projector where the UI must never fight the picture
+- Households mixing phones, tablets, desktops and TVs
+- Low-power NAS and mini-PC users, because blur is confined to a few small floating layers
+
+---
+
+## Installation
+
+### Option 1 — import from a CDN (recommended, tracks upstream)
+
+In Jellyfin: **Dashboard → General → Branding → Custom CSS**, paste:
+
+```css
+@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@main/liquid-glass.css");
+```
+
+Save, then hard-refresh the web client (`Ctrl/Cmd + Shift + R`).
+
+To pin a version instead of tracking `main`, replace `@main` with a tag, for example
+`@v4.0.0`. Pinning is recommended for a stable household setup.
+
+### Option 2 — paste the file (offline / air-gapped)
+
+Download `liquid-glass.css` from the repository and paste its entire contents into the
+same Custom CSS box. This works without internet access and cannot be broken by a CDN
+outage.
+
+### Verifying the install
+
+After a hard refresh, the page background should be a blue/violet aurora rather than
+flat dark grey, the top bar should be a rounded floating glass bar, and the Home tab
+should be a capsule. If nothing changed, the CSS is cached — see the FAQ.
+
+---
+
+## The v4 fix: the playback overlay covering the video
+
+This is the headline change in v4 and the reason it exists.
+
+### The bug
+
+Version 3 styled the player's bottom OSD as a full-width frosted slab:
+
+```css
+.videoOsdBottom {
+    background: rgba(9, 12, 22, 0.72) !important;
+    backdrop-filter: blur(16px) saturate(160%);
+}
+```
+
+That looks reasonable in isolation but collides with a detail of Jellyfin's own layout.
+The stock rule in `jellyfin-web`'s `src/styles/videoosd.scss` is:
+
+```css
+.videoOsdBottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding-top: 7.5em;
+    padding-bottom: max(env(safe-area-inset-bottom), 1.75em);
+    background: linear-gradient(0deg, rgba(16, 16, 16, 0.75), rgba(16, 16, 16, 0) 100%);
+    pointer-events: none;
+    will-change: opacity;
+    transition: opacity 0.3s ease-out;
+    display: flex;
+    justify-content: center;
+}
+```
+
+The element is deliberately much taller than its controls: `padding-top: 7.5em` exists so
+that the **transparent-to-black gradient scrim** has room to fade out gradually above the
+buttons. With a gradient, that padding is invisible. With an opaque background and a blur,
+the same padding becomes a **solid frosted block**.
+
+### Measured impact
+
+At 1440×900 with the OSD shown, v3 produced:
+
+| Metric | v3 | v4 |
+| --- | --- | --- |
+| Overlay top edge | 607px | 690px |
+| Overlay height | 293px | 211px |
+| Controls height | 171px | 171px |
+| `backdrop-filter` on overlay | `blur(16px) saturate(1.6)` | `none` |
+| Overlay background | `rgba(9, 12, 22, 0.72)` | `rgba(0, 0, 0, 0)` + soft gradient |
+
+So the glass was 122px taller than the controls it was supposed to hold — roughly the
+bottom third of a 900px-tall frame, with a hard horizontal edge across the picture.
+On a 390×844 phone the overlay was 343px tall; in v4 it is 235px.
+
+### The fix
+
+**1. Return `.videoOsdBottom` to a pure scrim.**
+
+```css
+.videoOsdBottom {
+    background: linear-gradient(
+        0deg,
+        rgba(3, 5, 10, 0.42) 0%,
+        rgba(3, 5, 10, 0.14) 34%,
+        transparent 62%
+    ) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-top: 0 !important;
+    padding-top: 1.5em;
+    padding-bottom: max(1em, env(safe-area-inset-bottom, 0px));
+    align-items: flex-end;
+}
+```
+
+The gradient keeps the buttons legible over bright footage but fades to fully transparent
+well above them, so the picture is unobstructed.
+
+**2. Move the glass onto `.osdControls`, the element that actually holds the buttons.**
+
+```css
+.videoOsdBottom .osdControls {
+    position: relative;
+    flex-grow: 1;
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 0.8em 1.05em 0.85em;
+    border-radius: var(--lg-radius-panel);
+    background: linear-gradient(180deg, rgba(24, 30, 48, 0.62), rgba(8, 11, 20, 0.74));
+    backdrop-filter: var(--lg-blur-osd);
+    -webkit-backdrop-filter: var(--lg-blur-osd);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.075),
+        0 18px 46px -18px rgba(0, 0, 0, 0.85),
+        0 2px 8px rgba(0, 0, 0, 0.35);
+    isolation: isolate;
+}
+```
+
+The result is a centred floating capsule capped at `62rem`, so on wide screens the glass
+never spans the full width of the picture. A `::before` pseudo-element at 46% height adds
+the specular highlight that makes the material read as glass rather than as a flat panel.
+
+**3. Kill the blur when the controls hide.**
+
+```css
+.videoOsdBottom.videoOsdBottom-hidden .osdControls {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+```
+
+Jellyfin hides the OSD by adding `.videoOsdBottom-hidden` (which sets `opacity: 0`) and,
+after the transition ends, `.hide` (which sets `display: none`). Chromium stops painting a
+`backdrop-filter` at `opacity: 0`, but iOS/WebKit can keep the blur layer alive. Explicitly
+removing the filter guarantees nothing is composited over the frame on any engine.
+
+### The second bug fixed in v4
+
+v3 applied the app-header styling to `.skinHeader`, which is the **global** header element.
+While a video plays, Jellyfin runs:
+
+```js
+const headerElement = document.querySelector('.skinHeader');
+headerElement.classList.add('osdHeader');
+```
+
+(see `src/controllers/playback/video/index.js` in 10.9/10.10 and
+`video-controller.js` in 12.x). Because `osdHeader` lands on the same global element, the
+theme's solid gradient and `border-bottom` were painted across the top of the video as a
+visible bar with a line under it.
+
+The fix is scoping: every header rule now targets `.skinHeader:not(.osdHeader)`, and the
+player header is reset explicitly:
+
+```css
+.skinHeader.osdHeader {
+    backdrop-filter: none;
+    border-bottom: 0;
+    box-shadow: none;
+}
+.skinHeader.osdHeader::after {
+    content: none;
+}
+```
+
+---
+
+## Features
+
+- **Aurora backdrop** — four radial gradients over a deep-space linear base, fixed
+  (`background-attachment: fixed`) so it does not scroll or repaint
+- **Film grain** — a `body::after` layer with a 160×160 inline SVG `feTurbulence` noise
+  texture at `opacity: 0.022`, `position: fixed`, `z-index: 9000`, `pointer-events: none`.
+  It gives the gradients and glass a physical texture and never participates in scrolling
+- **Glass on floating layers only** — header, drawer, dialogs, login card, player
+  controls. Cards, buttons and lists use translucent solids plus an inner stroke, so no
+  live blur is computed during scroll
+- **Concentric radii** — `--lg-radius-xs` 0.5rem, `-sm` 0.75rem, `-card` 1.125rem,
+  `-panel` 1.5rem, `-xl` 1.875rem, `-pill` 999px
+- **Capsule primary buttons** with hover lift that animates `transform` only, so images
+  are never re-rasterised
+- **iOS-style grouped inset lists** on settings pages
+- **Responsive** — phone, tablet, folded and unfolded foldables, desktop and TV
+- **Safe-area aware** — notches and `env(safe-area-inset-*)`
+- **Accessible** — ≥44px touch targets, TV focus rings, honours
+  `prefers-reduced-transparency`, `prefers-reduced-motion` and `prefers-contrast`
+- **Graceful degradation** — an `@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))`
+  block swaps glass for translucent solids
+- **Material Icons mojibake fix** — 2178 explicit glyph rules (see below)
+
+### Performance strategy
+
+Blur is expensive because the compositor must re-sample everything behind the element on
+every frame in which that content changes. The theme therefore applies `backdrop-filter`
+to exactly **five classes** of floating surface (header, drawer, dialog, login card,
+player control capsule), each a small area. Everything else — cards, buttons, lists,
+inputs — uses `rgba()` fills plus `inset 0 1px 0` highlights, which cost nothing to
+scroll. Transitions are capped at 0.24s and restricted to `transform`, `opacity` and
+`background-color`, all of which are compositor-friendly.
+
+---
+
+## Material Icons mojibake fix
+
+Jellyfin serves its icon stylesheet as raw UTF-8 bytes without a `charset` declaration.
+Safari and some WebViews therefore decode it as Latin-1, and icons that should render as
+glyphs render as mojibake such as `îŸ½`.
+
+The theme ships a complete, encoding-independent rewrite: 2178 rules of the form
+
+```css
+.material-icons.play_arrow::before { content: "\e037 " !important; }
+```
+
+Because the CSS file is UTF-8 and the codepoints are expressed as ASCII escape sequences,
+the glyphs resolve correctly regardless of how the document was decoded. The icon block is
+kept verbatim at the end of the file (roughly 2178 rules, starting at the
+"图标乱码修复" comment) and should not be edited by hand.
+
+---
+
+## Compatibility
+
+| Jellyfin version | Status | Notes |
+| --- | --- | --- |
+| 10.9.x | ✅ | Built on the classic `.videoOsdBottom` / `.osdControls` class names |
+| 10.10.x | ✅ | Player DOM unchanged from 10.9 |
+| 12.x | ✅ | Also handles the newer `.videoOsd-appBar` safe-area rules; the OSD hide mechanism (`videoOsdBottom-hidden` + `hide`, header `osdHeader-hidden`) is unchanged |
+| Web (browser) | ✅ | Chrome / Edge / Firefox / Safari |
+| Android app | ✅ | Embedded WebView loads the same CSS |
+| iOS app | ✅ | Embedded WebView loads the same CSS |
+| Android TV / TV clients | ✅ | Extra `.layout-tv` focus-ring tuning |
+
+Requires `backdrop-filter` (Chrome 76+, Safari 9+, Firefox 103+). Without it, the
+`@supports` fallback supplies translucent solids and the theme remains fully usable.
+
+Known limitations:
+
+- Dark theme only. `:root` declares `color-scheme: dark`; a light variant is planned.
+- The theme targets the **classic** jellyfin-web class names. Jellyfin 12's experimental
+  React client ("modern app") uses different class names and is not targeted yet.
+
+---
+
+## FAQ
+
+**The UI didn't change after I installed it.**
+Jellyfin caches custom CSS aggressively. Hard-refresh first (`Ctrl/Cmd + Shift + R`),
+confirm the code is in **Dashboard → General → Branding → Custom CSS**, and if you use
+`@import` make sure it is the very first line of the box.
+
+**There is still a blurry bar covering the bottom of the video while playing.**
+That is the v3 behaviour, fixed in v4. If you still see it, the browser is serving cached
+CSS — clear the cache or switch to a versioned `@import` URL such as `@v4.0.0`.
+
+**Does it hurt playback performance?**
+No. Only **three rules** in the file enable live blur (the glass recipe, the player control
+capsule and the audio now-playing bar), and all three apply to small floating surfaces.
+Cards, buttons and lists are translucent solids with an inner stroke and never blur.
+Animations touch only `transform`, `opacity` and `background-color`, with durations ≤0.24s.
+
+**Can I change the colours without touching the layout?**
+Yes. All colours live in the `:root` design tokens at the top of the file
+(`--lg-accent`, `--lg-accent-2`, `--lg-accent-3`, `--lg-panel`, `--lg-glass-*`,
+`--lg-text*`, `--lg-stroke*`). Override the tokens and leave the rules alone.
+
+**Is there a light theme?**
+Not yet. The theme declares `color-scheme: dark`.
+
+**Icons render as garbage characters.**
+The theme ships 2178 Material Icons glyph rules that fix this. If it still happens,
+another custom CSS file is probably overriding `font-family` on `.material-icons`.
+
+**Does it work with the Jellyfin mobile apps?**
+Yes. The Android and iOS apps embed the same web client, so the same Custom CSS applies.
+On iOS, the WebKit-specific handling of `backdrop-filter` at `opacity: 0` is already
+accounted for (see the v4 fix).
+
+**Will it break on a Jellyfin upgrade?**
+The theme depends on jellyfin-web class names that have been stable across 10.9, 10.10
+and 12.x. Major rewrites (such as the experimental React client) use different class
+names; the theme does not target those yet.
+
+---
+
+## Design tokens
+
+All tokens are declared on `:root` at the top of `liquid-glass.css`.
+
+| Token | Value | Purpose |
+| --- | --- | --- |
+| `--lg-glass-low` | `rgba(255,255,255,0.055)` | faintest glass fill |
+| `--lg-glass-mid` | `rgba(255,255,255,0.1)` | default glass fill |
+| `--lg-glass-high` | `rgba(255,255,255,0.16)` | emphasised glass fill |
+| `--lg-panel` | `rgba(13,17,30,0.74)` | floating panel background |
+| `--lg-panel-solid` | `rgba(13,17,30,0.95)` | opaque panel (fallback) |
+| `--lg-scrim` | `rgba(4,6,12,0.55)` | dialog backdrop |
+| `--lg-stroke` | `rgba(255,255,255,0.16)` | glass edge |
+| `--lg-stroke-soft` | `rgba(255,255,255,0.085)` | subtle edge |
+| `--lg-hi-strong` / `--lg-hi` / `--lg-hi-faint` | `0.34` / `0.2` / `0.08` white | specular highlights |
+| `--lg-text` / `--lg-text-dim` / `--lg-text-faint` | `0.94` / `0.6` / `0.4` white | text hierarchy |
+| `--lg-accent` | `#0a84ff` | primary accent (iOS blue) |
+| `--lg-accent-2` | `#64d2ff` | secondary accent (cyan) |
+| `--lg-accent-3` | `#bf5af2` | tertiary accent (violet) |
+| `--lg-accent-warm` | `#ff9f0a` | warm accent |
+| `--lg-accent-grad` | `linear-gradient(135deg, #0a84ff, #3f6bff 48%, #bf5af2)` | gradient accent |
+| `--lg-radius-xs` … `--lg-radius-pill` | `0.5rem` … `999px` | concentric radii |
+| `--lg-shadow-1` / `-2` / `-3` | layered ambient + contact shadows | elevation |
+| `--lg-ease` | `cubic-bezier(0.22, 1, 0.36, 1)` | standard easing |
+| `--lg-content-max` | `46rem` | content column width |
+| `--lg-tap-target` | `2.75em` | minimum touch target |
+| `--lg-blur` | `blur(18px) saturate(180%)` | standard glass blur |
+| `--lg-blur-strong` | `blur(26px) saturate(190%)` | dialogs |
+| `--lg-blur-osd` | `blur(20px) saturate(175%)` | player capsule |
+
+---
+
+## Repository layout
+
+```
+liquid-glass.css              the theme (3435 lines, single file, no dependencies)
+docs/screenshots/*.webp       screenshots (WebP, ~536 KB total)
+docs/schema.jsonld            Schema.org description of the project
+llms.txt                      content index for AI engines
+llms-full.txt                 this file
+LICENSE                       MIT
+README.md                     bilingual (Chinese + English) documentation
+```
+
+---
+
+## Screenshots
+
+Captured from the project's own mock UI so the theme can be verified without a running
+Jellyfin server. **No real library data, server address or account name appears in any
+screenshot** — artwork is generated SVG, titles are placeholders, and the login form shows
+a neutral `demo` user.
+
+| File | What it shows |
+| --- | --- |
+| `docs/screenshots/home-desktop.webp` | Home screen, 1440×900: aurora background, glass header, capsule nav tab, hover-lit cards |
+| `docs/screenshots/detail-desktop.webp` | Media detail page: masked backdrop, pill metadata chips, cast row |
+| `docs/screenshots/player-before-desktop.webp` | v3 playback overlay — frosted slab covering the bottom third of the frame |
+| `docs/screenshots/player-after-desktop.webp` | v4 playback overlay — floating glass capsule, picture visible around it |
+| `docs/screenshots/settings-desktop.webp` | Settings page with iOS-style grouped inset lists |
+| `docs/screenshots/dialog-desktop.webp` | Glass dialog over the library with a dimmed backdrop |
+| `docs/screenshots/login-desktop.webp` | Login card on the aurora background |
+| `docs/screenshots/home-mobile.webp` | Phone layout, 390×844 |
+| `docs/screenshots/home-tablet.webp` | Tablet layout, 834×1112 |
+| `docs/screenshots/home-tv.webp` | TV layout, 1920×1080 |
+| `docs/screenshots/player-mobile.webp` | Phone playback overlay, 390×844 |
+
+---
+
+## Comparison with other Jellyfin themes
+
+| Aspect | Liquid Glass | Typical Jellyfin CSS themes |
+| --- | --- | --- |
+| Delivery | one CSS file, no dependencies | usually one file too |
+| Blur strategy | confined to 5 floating layer classes | often applied broadly, which costs scroll performance |
+| Playback overlay | scrim + floating capsule; never covers the video | frequently restyles `.videoOsdBottom` as a full-width slab, reproducing the covering bug |
+| Icon mojibake | fixed with 2178 explicit glyph rules | rarely addressed |
+| Accessibility | reduced-transparency / reduced-motion / contrast media queries, 44px targets | varies |
+| Responsiveness | dedicated phone / tablet / foldable / desktop / TV blocks | varies |
+
+---
+
+## License
+
+MIT © aoxzh. See `LICENSE`.
+
+---
+
+## Machine-readable summary
+
+```
+name: Liquid Glass
+type: custom CSS theme (skin)
+target: Jellyfin web client (jellyfin-web)
+target versions: 10.9.x, 10.10.x, 12.x
+delivery: single CSS file, no plugin, no server change
+install: Dashboard > General > Branding > Custom CSS
+file: liquid-glass.css
+lines: 3435
+bytes: 190987
+dependencies: none
+backdrop-filter declarations: 14 (7 rules x 2 with the -webkit- mirror): 3 rules enable blur, 4 rules reset it to none
+icon glyph rules: 2178
+license: MIT
+repository: https://github.com/aoxzh/jellyfin-liquid-glass
+primary fix in v4: playback overlay no longer covers the video
+```
