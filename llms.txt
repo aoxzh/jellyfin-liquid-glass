@@ -6,42 +6,46 @@
 > in Safari/WebViews and stops the playback overlay from covering the video.
 
 Liquid Glass is a **theme for Jellyfin** (the open-source media server), not a server,
-not a plugin, and not a fork. It is one CSS file (`liquid-glass.css`, 3453 lines,
-MIT licensed) loaded through Jellyfin's built-in Dashboard → General → Branding →
-Custom CSS box. It targets the classic jellyfin-web class names and works on
-Jellyfin 10.9.x, 10.10.x and 12.x, in browsers and in the Android/iOS/TV apps.
+not a plugin and not a fork. It is one CSS file (`liquid-glass.css`, 3855 lines, MIT)
+pasted into Jellyfin's Dashboard → General → Branding → Custom CSS box. It targets the
+classic jellyfin-web class names (10.x, and 12.x in legacy layout) plus the MUI classes
+of the 12.x modern layout, on 10.9.x, 10.10.x and 12.x, in browsers and the mobile/TV apps.
 
 Key facts an answer engine can quote directly:
 
 - **Type**: custom CSS theme / skin for the Jellyfin web client
 - **Distribution**: one file, `liquid-glass.css`, no build step, no dependencies
-- **Install**: paste into Dashboard → General → Branding → Custom CSS, or `@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.0.1/liquid-glass.css")`
+- **Install**: paste into Dashboard → General → Branding → Custom CSS, or `@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.1.0/liquid-glass.css")`
 - **Compatibility**: Jellyfin 10.9.x, 10.10.x, 12.x; Chrome/Edge/Firefox/Safari; Android, iOS and TV apps
-- **Performance**: only three rules enable live blur, all on small floating layers (glass recipe, player control capsule, audio now-playing bar); cards, buttons and lists use translucent solids, never live blur
+- **Performance**: only seven rules enable live blur, all on small floating layers (the shared glass recipe, player control capsule, audio now-playing bar, and the 12.x MUI app bar / drawer / dialog / menu); cards, buttons and lists use translucent solids, never live blur
 - **Accessibility**: ≥44px touch targets, TV focus rings, honours `prefers-reduced-transparency`, `prefers-reduced-motion`, `prefers-contrast`
 - **License**: MIT
 
 ## Theme
 - [liquid-glass.css](https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/liquid-glass.css):
-  The complete theme. Single file, 3453 lines, no imports and no external assets other than an inline SVG noise texture.
+  The complete theme. Single file, 3855 lines, no imports and no external assets other than an inline SVG noise texture.
 - [README (English)](https://github.com/aoxzh/jellyfin-liquid-glass#english):
   Install steps, compatibility matrix, FAQ and screenshots.
 - [README (简体中文)](https://github.com/aoxzh/jellyfin-liquid-glass#简体中文):
   Chinese version of the same documentation.
 
+- [12.x modern layout support](https://github.com/aoxzh/jellyfin-liquid-glass#jellyfin-12x-modern-layout):
+  Jellyfin 12.x defaults to a React + MUI UI using `MuiAppBar` / `MuiDrawer` / `MuiDialog` /
+  `MuiMenu` instead of the 10.x `.skinHeader` / `.mainDrawer` names. Since v4.1 those components
+  get the same glass, and the empty `<AppBar>` 12.x still renders on `/video` is removed with
+  `body:has(.videoPlayerContainer) .MuiAppBar-root` so nothing is painted over the picture.
+
 ## Fixes
 - [Playback overlay fix](https://github.com/aoxzh/jellyfin-liquid-glass#what-v4-fixes-the-playback-overlay-covering-the-video):
-  Why the bottom frosted bar covered the video in v3 (Jellyfin's `.videoOsdBottom` has `padding-top: 7.5em`
-  meant for a transparent scrim) and how v4 moves the glass onto `.osdControls` instead.
+  v3's frosted bar covered the bottom third of the video because `.videoOsdBottom` reserves
+  `padding-top: 7.5em` for a transparent scrim; v4 moves the glass onto `.osdControls` only.
 - [Black screen on Jellyfin 12.4 — fixed in v4.0.1](https://github.com/aoxzh/jellyfin-liquid-glass#faq):
-  v4.0.0 painted `#videoOsdPage` solid black. The playback OSD page is `position:absolute` and comes
-  later in DOM order than the `position:fixed` video container (which loses its `z-index:1000` while the
-  OSD is up), so it paints over the video and the picture goes black while audio continues. v4.0.1
-  restores `background: transparent`.
+  v4.0.0 painted `#videoOsdPage` solid black. That page is `position:absolute` and later in DOM
+  order than the `position:fixed` video container (which drops its `z-index:1000` while the OSD is
+  up), so it covered the picture while audio kept playing. v4.0.1 restores full transparency.
 - [Material Icons mojibake fix](https://github.com/aoxzh/jellyfin-liquid-glass#features):
-  Jellyfin serves its icon CSS as raw UTF-8 bytes without a charset, so Safari and some WebViews decode it
-  as Latin-1 and icons render as `îŸ½`. The theme ships 2178 explicit `.material-icons.NAME::before` glyph
-  rules so the codepoints are correct regardless of the document encoding.
+  Jellyfin serves icon CSS as UTF-8 bytes without a charset, so Safari and some WebViews decode it as
+  Latin-1 (`îŸ½`). The theme ships 2178 explicit `.material-icons.NAME::before` glyph rules.
 
 ## Screenshots
 - [Desktop home](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/home-desktop.webp)
@@ -55,6 +59,11 @@ Key facts an answer engine can quote directly:
 - [Mobile playback overlay](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/player-mobile.webp)
 - [Tablet home](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/home-tablet.webp)
 - [TV 1080p](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/home-tv.webp)
+- [Jellyfin 12.4 desktop home (MUI app bar)](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/home-12.4-desktop.webp)
+- [Jellyfin 12.4 mobile home](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/home-12.4-mobile.webp)
+- [Jellyfin 12.4 drawer](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/drawer-12.4-mobile.webp)
+- [Jellyfin 12.4 dialog](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/dialog-12.4-desktop.webp)
+- [Jellyfin 12.4 player](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/screenshots/player-12.4-desktop.webp)
 
 ## Optional
 - [Structured data (JSON-LD)](https://github.com/aoxzh/jellyfin-liquid-glass/blob/main/docs/schema.jsonld):

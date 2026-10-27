@@ -1,10 +1,12 @@
 /* ==========================================================================
-   Liquid Glass — Jellyfin 主题 (v4)
+   Liquid Glass — Jellyfin 主题 (v4.1)
    iOS 26 "Liquid Glass" 设计语言:分层玻璃、镜面高光、同心圆角、内容自适应色调。
 
    性能策略(与 v3 一致, 只是把玻璃做得更"厚"而不是更多):
-   - backdrop-filter 只出现在 5 类悬浮层(顶栏/抽屉/弹窗/登录卡/播放器控制条),
-     且每个都是小面积元素; 半径 ≤22px
+   - backdrop-filter 只出现在悬浮层: 顶栏 / 抽屉 / 弹窗 / 菜单 / 登录卡 /
+     播放器控制条, 且每个都是小面积元素; 半径 ≤22px
+   - 12.x 的 MUI 组件(顶栏/抽屉/弹窗/菜单)是同一批悬浮层的另一套实现,
+     覆盖的是同一块面积, 不是额外再叠一层
    - 卡片/按钮/列表一律用半透明纯色 + 内描边高光, 不做实时模糊
    - 过渡 ≤0.24s, 只动 transform / opacity / background-color
    - 尊重 safe-area、prefers-reduced-transparency / -motion / -contrast
@@ -1102,6 +1104,8 @@ input[type="radio"] {
     /* 播放器: 手机端控制胶囊贴边更近、内边距更小 */
     .videoOsdBottom {
         padding-top: 0.75em;
+        padding-left: 0.55em;
+        padding-right: 0.55em;
         padding-bottom: max(0.6em, env(safe-area-inset-bottom, 0px));
     }
 
@@ -1179,6 +1183,389 @@ input[type="radio"] {
 }
 
 /* ==========================================================================
+   Jellyfin 12.x 现代布局 (React + @mui/material)
+   --------------------------------------------------------------------------
+   12.4 起网页端默认走 "Modern" 布局: 顶栏是 <AppBar>、抽屉是 <Drawer>、
+   弹窗是 <Dialog>、菜单是 <Menu>、按钮是 <Button> —— 它们都不带
+   .skinHeader / .dialog / .paperList / .emby-button 这些老类名,
+   上面那一整段规则完全够不到, 于是 12.4 上只剩背景变了、控件还是原生的。
+   这一段给 MUI 组件补上同一套玻璃语言。
+
+   两个必须注意的点:
+   1) MUI 的样式由 emotion 在运行时注入 <head>, 优先级不低于本文件的同权
+      选择器, 所以要覆盖就得用 !important(与本文件其余部分保持一致)。
+   2) 播放器路由 /video 下 <AppBar> 仍然存在, 只是 AppToolbar 返回 null,
+      变成一条 48px 的空白固定条压在画面顶部。若不处理, 给它加的玻璃
+      会在视频上方留一道横带 —— 正是这个主题最不该犯的错。
+   ========================================================================== */
+
+/* ---------- 顶栏 ---------- */
+
+.MuiAppBar-root {
+    background: linear-gradient(180deg, rgba(13, 17, 30, 0.74), rgba(13, 17, 30, 0.52)) !important;
+    -webkit-backdrop-filter: var(--lg-blur) !important;
+    backdrop-filter: var(--lg-blur) !important;
+    border-bottom: 1px solid var(--lg-stroke-soft) !important;
+    box-shadow: inset 0 1px 0 var(--lg-hi-faint) !important;
+    color: var(--lg-text) !important;
+}
+
+/* 播放中: 顶栏让位, 不留任何底色/模糊/描边 */
+body:has(.videoPlayerContainer) .MuiAppBar-root {
+    background: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+}
+
+/* ---------- 抽屉 ---------- */
+
+.MuiDrawer-paper {
+    background: var(--lg-panel) !important;
+    -webkit-backdrop-filter: var(--lg-blur-strong) !important;
+    backdrop-filter: var(--lg-blur-strong) !important;
+    border-right: 1px solid var(--lg-stroke-soft) !important;
+    box-shadow: inset -1px 0 0 var(--lg-hi-faint), var(--lg-shadow-3) !important;
+    color: var(--lg-text) !important;
+}
+
+.MuiListItemButton-root {
+    border-radius: var(--lg-radius-sm) !important;
+    margin: 0.1em 0.5em !important;
+    padding-left: 0.65em !important;
+    padding-right: 0.65em !important;
+    transition: background-color 0.15s var(--lg-ease) !important;
+}
+
+.MuiListItemButton-root:hover {
+    background: var(--lg-glass-mid) !important;
+}
+
+.MuiListItemButton-root.Mui-selected {
+    background: rgba(10, 132, 255, 0.18) !important;
+    box-shadow: inset 0 0 0 1px rgba(10, 132, 255, 0.34) !important;
+}
+
+.MuiListItemButton-root.Mui-selected:hover {
+    background: rgba(10, 132, 255, 0.26) !important;
+}
+
+.MuiListItemIcon-root {
+    color: var(--lg-text-dim) !important;
+    min-width: 2.25em !important;
+}
+
+.MuiListItemButton-root.Mui-selected .MuiListItemIcon-root {
+    color: var(--lg-accent-2) !important;
+}
+
+.MuiListItemText-root {
+    color: var(--lg-text) !important;
+}
+
+.MuiListSubheader-root {
+    color: var(--lg-text-faint) !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase;
+    padding-top: 0.95em !important;
+    padding-bottom: 0.35em !important;
+}
+
+.MuiDivider-root {
+    border-color: var(--lg-stroke-soft) !important;
+}
+
+/* ---------- 弹窗 / 遮罩 ---------- */
+
+.MuiDialog-paper {
+    background: linear-gradient(180deg, rgba(20, 26, 42, 0.9), rgba(11, 15, 26, 0.94)) !important;
+    -webkit-backdrop-filter: var(--lg-blur-strong) !important;
+    backdrop-filter: var(--lg-blur-strong) !important;
+    border-radius: var(--lg-radius-panel) !important;
+    box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 0 0 1px var(--lg-stroke-soft),
+        var(--lg-shadow-3) !important;
+    color: var(--lg-text) !important;
+}
+
+.MuiDialog-paper.MuiDialog-paperFullScreen {
+    border-radius: 0 !important;
+}
+
+.MuiDialogTitle-root {
+    font-weight: 700 !important;
+    letter-spacing: -0.012em;
+}
+
+.MuiDialogContent-root.MuiDialogContent-dividers {
+    border-color: var(--lg-stroke-soft) !important;
+}
+
+.MuiBackdrop-root {
+    background-color: var(--lg-scrim) !important;
+}
+
+/* ---------- 菜单 / 浮层 ---------- */
+
+.MuiMenu-paper,
+.MuiPopover-paper,
+.MuiAutocomplete-paper {
+    background: var(--lg-panel) !important;
+    -webkit-backdrop-filter: var(--lg-blur) !important;
+    backdrop-filter: var(--lg-blur) !important;
+    border-radius: var(--lg-radius-card) !important;
+    box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 0 0 1px var(--lg-stroke-soft),
+        var(--lg-shadow-3) !important;
+    color: var(--lg-text) !important;
+}
+
+.MuiMenuItem-root {
+    min-height: var(--lg-tap-target) !important;
+    border-radius: var(--lg-radius-xs) !important;
+    margin: 0.1em 0.35em !important;
+    transition: background-color 0.15s var(--lg-ease) !important;
+}
+
+.MuiMenuItem-root:hover {
+    background: var(--lg-glass-mid) !important;
+}
+
+.MuiMenuItem-root.Mui-selected {
+    background: rgba(10, 132, 255, 0.2) !important;
+}
+
+.MuiTooltip-tooltip {
+    background: rgba(8, 11, 20, 0.94) !important;
+    color: var(--lg-text) !important;
+    border: 1px solid var(--lg-stroke-soft);
+    border-radius: var(--lg-radius-xs) !important;
+    box-shadow: var(--lg-shadow-2) !important;
+    font-size: 0.78rem;
+}
+
+.MuiTooltip-arrow {
+    color: rgba(8, 11, 20, 0.94) !important;
+}
+
+/* ---------- 按钮 / 标签 ---------- */
+
+.MuiButton-root {
+    border-radius: var(--lg-radius-pill) !important;
+    font-weight: 600;
+    letter-spacing: 0;
+    padding: 0.4em 1.15em;
+    transition: transform 0.16s var(--lg-ease), box-shadow 0.16s var(--lg-ease),
+        background-color 0.16s var(--lg-ease) !important;
+}
+
+.MuiButton-containedPrimary,
+.MuiButton-containedSecondary {
+    background: var(--lg-accent-grad) !important;
+    color: #fff !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), var(--lg-shadow-1) !important;
+}
+
+.MuiButton-containedPrimary:hover,
+.MuiButton-containedSecondary:hover {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), var(--lg-shadow-2) !important;
+    filter: brightness(1.08);
+}
+
+.MuiButton-outlined {
+    border-color: var(--lg-stroke) !important;
+    background: var(--lg-glass-low) !important;
+    color: var(--lg-text) !important;
+}
+
+.MuiButton-outlined:hover {
+    background: var(--lg-glass-mid) !important;
+}
+
+/* 文字按钮只在“主色”时染成强调色:
+   12.x 顶栏的库标签用 variant='text' + color='inherit'/'primary' 区分选中态,
+   若无条件改 color 会把所有标签一起变色。 */
+.MuiButton-text.MuiButton-colorPrimary {
+    color: var(--lg-accent-2) !important;
+}
+
+.MuiButton-text.MuiButton-colorInherit {
+    color: var(--lg-text) !important;
+}
+
+.MuiIconButton-root {
+    color: var(--lg-text) !important;
+    border-radius: var(--lg-radius-pill) !important;
+    transition: background-color 0.16s var(--lg-ease), transform 0.16s var(--lg-ease) !important;
+}
+
+.MuiIconButton-root:hover {
+    background: var(--lg-glass-mid) !important;
+}
+
+.MuiIconButton-root:active {
+    transform: scale(0.94);
+}
+
+.MuiIconButton-root.Mui-focusVisible {
+    box-shadow: 0 0 0 2px var(--lg-accent-2) !important;
+}
+
+.MuiAvatar-root {
+    background: var(--lg-accent-grad) !important;
+    color: #fff !important;
+    font-weight: 600;
+    box-shadow: inset 0 1px 0 var(--lg-hi-strong), var(--lg-shadow-1) !important;
+}
+
+.MuiChip-root {
+    border-radius: var(--lg-radius-pill) !important;
+    background: var(--lg-glass-mid) !important;
+    color: var(--lg-text) !important;
+    border: 1px solid var(--lg-stroke-soft);
+    font-weight: 600;
+}
+
+.MuiChip-root.MuiChip-colorPrimary,
+.MuiChip-root.MuiChip-filledPrimary {
+    background: rgba(10, 132, 255, 0.22) !important;
+    color: var(--lg-accent-2) !important;
+    border-color: rgba(100, 210, 255, 0.4);
+}
+
+.MuiBadge-badge {
+    background: var(--lg-accent) !important;
+    color: #fff !important;
+}
+
+/* ---------- 输入 / 选择 ---------- */
+
+.MuiFilledInput-root,
+.MuiOutlinedInput-root,
+.MuiInput-root {
+    background: var(--lg-glass-low) !important;
+    border-radius: var(--lg-radius-sm) !important;
+    color: var(--lg-text) !important;
+}
+
+.MuiFilledInput-root:hover,
+.MuiOutlinedInput-root:hover {
+    background: var(--lg-glass-mid) !important;
+}
+
+.MuiFilledInput-root.Mui-focused,
+.MuiOutlinedInput-root.Mui-focused {
+    background: var(--lg-glass-mid) !important;
+    box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.45) !important;
+}
+
+.MuiOutlinedInput-notchedOutline {
+    border-color: var(--lg-stroke) !important;
+}
+
+.MuiInputLabel-root {
+    color: var(--lg-text-dim) !important;
+}
+
+.MuiInputLabel-root.Mui-focused {
+    color: var(--lg-accent-2) !important;
+}
+
+.MuiFormHelperText-root {
+    color: var(--lg-text-faint) !important;
+}
+
+/* ---------- 标签页 ---------- */
+
+.MuiTab-root {
+    color: var(--lg-text-dim) !important;
+    text-transform: none !important;
+    font-weight: 600;
+    min-height: 2.6em;
+    border-radius: var(--lg-radius-pill);
+    transition: background-color 0.16s var(--lg-ease), color 0.16s var(--lg-ease) !important;
+}
+
+.MuiTab-root.Mui-selected {
+    color: var(--lg-text) !important;
+    background: var(--lg-glass-mid);
+}
+
+.MuiTabs-indicator {
+    height: 3px !important;
+    border-radius: var(--lg-radius-pill);
+    background: var(--lg-accent-grad) !important;
+}
+
+/* ---------- 开关 / 滑块 / 进度 ---------- */
+
+.MuiSwitch-switchBase.Mui-checked {
+    color: var(--lg-accent) !important;
+}
+
+.MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
+    background-color: var(--lg-accent) !important;
+    opacity: 0.5 !important;
+}
+
+.MuiSlider-rail {
+    opacity: 0.28 !important;
+}
+
+.MuiSlider-track {
+    background: var(--lg-accent-grad) !important;
+    border: 0 !important;
+}
+
+.MuiSlider-thumb {
+    color: var(--lg-accent) !important;
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.24) !important;
+}
+
+.MuiLinearProgress-bar {
+    background: var(--lg-accent-grad) !important;
+}
+
+.MuiCircularProgress-root {
+    color: var(--lg-accent-2) !important;
+}
+
+.MuiSkeleton-root {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ---------- 提示条 / 表格 ---------- */
+
+.MuiAlert-root {
+    background: var(--lg-panel) !important;
+    border: 1px solid var(--lg-stroke-soft);
+    border-radius: var(--lg-radius-card) !important;
+    color: var(--lg-text) !important;
+}
+
+.MuiSnackbarContent-root {
+    background: var(--lg-panel-solid) !important;
+    border-radius: var(--lg-radius-card) !important;
+    box-shadow: var(--lg-shadow-2) !important;
+    color: var(--lg-text) !important;
+}
+
+.MuiTableCell-root {
+    border-color: var(--lg-stroke-soft) !important;
+    color: var(--lg-text) !important;
+}
+
+.MuiTableCell-head {
+    color: var(--lg-text-dim) !important;
+    font-weight: 700 !important;
+}
+
+.MuiTableRow-root:hover {
+    background: var(--lg-glass-low) !important;
+}
+
+/* ==========================================================================
    无障碍
    ========================================================================== */
 
@@ -1194,7 +1581,12 @@ input[type="radio"] {
     .visualLoginForm,
     .videoOsdBottom .osdControls,
     .upNextDialog,
-    .nowPlayingBar {
+    .nowPlayingBar,
+    .MuiAppBar-root,
+    .MuiDrawer-paper,
+    .MuiDialog-paper,
+    .MuiMenu-paper,
+    .MuiPopover-paper {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
         background: var(--lg-panel-solid) !important;
@@ -1226,7 +1618,12 @@ input[type="radio"] {
     .emby-textarea,
     .emby-select,
     .cardImageContainer img,
-    .cardImageContainer::after {
+    .cardImageContainer::after,
+    .MuiButton-root,
+    .MuiIconButton-root,
+    .MuiListItemButton-root,
+    .MuiMenuItem-root,
+    .MuiTab-root {
         transition: none !important;
     }
 
@@ -1264,7 +1661,12 @@ input[type="radio"] {
     .visualLoginForm,
     .videoOsdBottom .osdControls,
     .upNextDialog,
-    .nowPlayingBar {
+    .nowPlayingBar,
+    .MuiAppBar-root,
+    .MuiDrawer-paper,
+    .MuiDialog-paper,
+    .MuiMenu-paper,
+    .MuiPopover-paper {
         background: var(--lg-panel-solid) !important;
     }
 }

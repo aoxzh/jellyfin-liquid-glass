@@ -58,17 +58,31 @@ v4 的改法：
 - **无障碍**：≥44px 触控目标、TV 焦点环、`prefers-reduced-transparency` / `prefers-reduced-motion` / `prefers-contrast` 全部尊重
 - **图标乱码修复**：内置全量 Material Icons 字形映射（2178 条规则），修掉 Safari / 部分 WebView 下图标显示成 `îŸ½` 的 Latin-1 解码问题 —— 与文件编码无关，纯 CSS 实现
 
+### Jellyfin 12.x 现代布局
+
+12.x 的网页端默认换成了一套基于 React + MUI 的新界面：顶栏是 `MuiAppBar`，抽屉是 `MuiDrawer`，弹窗是 `MuiDialog`，菜单是 `MuiMenu` —— 这些类名和 10.x 的 `.skinHeader` / `.mainDrawer` / `.dialog` 完全不是一套。v4.1 起把**同一套玻璃语言补到了这批 MUI 组件上**，所以新旧两种布局看起来是一致的，而不是「老界面是玻璃、新界面是裸的」。
+
+| 12.4 桌面首页 | 12.4 手机抽屉 |
+| :---: | :---: |
+| <img src="docs/screenshots/home-12.4-desktop.webp" width="430" alt="Jellyfin 12.4 modern layout with a glass MUI app bar over the aurora"> | <img src="docs/screenshots/drawer-12.4-mobile.webp" width="150" alt="Jellyfin 12.4 MUI drawer with glass paper and a selected pill"> |
+
+| 12.4 播放界面 | 12.4 弹窗 |
+| :---: | :---: |
+| <img src="docs/screenshots/player-12.4-desktop.webp" width="430" alt="Jellyfin 12.4 player: soft top gradient and a floating glass control capsule"> | <img src="docs/screenshots/dialog-12.4-desktop.webp" width="430" alt="Jellyfin 12.4 MUI dialog with a glass paper and pill buttons"> |
+
+> 12.4 的播放页在 DOM 上是「新的 React 外壳 + 旧的播放器视图」：顶栏那个 `<AppBar>` 依然存在，但里面是空的（`AppToolbar` 对 `/video` 直接 `return null`）。主题用 `body:has(.videoPlayerContainer) .MuiAppBar-root` 把这条空栏彻底关掉，避免在画面上方留下一条玻璃带。
+
 ### 安装
 
 **方式一（推荐，锁定版本）** —— 仪表盘 → 常规 → 品牌 → 自定义 CSS，粘贴：
 
 ```css
-@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.0.1/liquid-glass.css");
+@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.1.0/liquid-glass.css");
 ```
 
 **方式二（离线 / 内网无外网）** —— 下载 [`liquid-glass.css`](liquid-glass.css)，把整个文件内容粘贴进同一个「自定义 CSS」框。这是最稳的方式：不依赖任何 CDN，也不会有缓存不同步的问题。
 
-**方式三（跟随上游）** —— 把上面的 `@v4.0.1` 换成 `@main`。注意 jsDelivr 对分支名有最长约 12 小时的缓存，刚发新版时可能还拿到旧文件；遇到这种情况改用方式一或方式二。
+**方式三（跟随上游）** —— 把上面的 `@v4.1.0` 换成 `@main`。注意 jsDelivr 对分支名有最长约 12 小时的缓存，刚发新版时可能还拿到旧文件；遇到这种情况改用方式一或方式二。
 
 保存后刷新页面（`Ctrl/Cmd + Shift + R`）即可生效。
 
@@ -78,7 +92,7 @@ v4 的改法：
 | --- | --- | --- |
 | 10.9.x | ✅ | 基于 `.videoOsdBottom` / `.osdControls` 经典类名 |
 | 10.10.x | ✅ | 同上，播放器 DOM 未变 |
-| 12.x | ✅ | 已在 **12.4.0**（新 React 客户端 + 经典播放器视图）实测；`.videoOsd-appBar` 安全区规则同样兼容 |
+| 12.x | ✅ | 已在 **12.4.0** 实测，**默认的现代布局（MUI）和经典布局都做了适配**：MUI 顶栏 / 抽屉 / 弹窗 / 菜单换成同一套玻璃，播放页不再有顶栏压画面 |
 | 网页端（浏览器） | ✅ | Chrome / Edge / Firefox / Safari |
 | Android / iOS App | ✅ | 内置 WebView 走同一套 CSS |
 | Android TV / 电视端 | ✅ | 额外有 `.layout-tv` 焦点环优化 |
@@ -97,11 +111,11 @@ v4 的改法：
 
 **问：升级到 Jellyfin 12.4 后播放黑屏、只有声音？**
 
-答：这是 **v4.0.0 的 bug**，已在 **v4.0.1** 修复，不是 Jellyfin 的问题。原因：jellyfin-web 把 `<video>` 放在 `body` 的第一个子节点 `.videoPlayerContainer`（`position:fixed`），而播放 OSD 页 `#videoOsdPage` 在 DOM 里排在它之后、两者都是 `z-index:auto`，所以 OSD 页永远画在视频上层 —— 官方就是靠这个页面**全透明**让画面透出来的。v4.0.0 给它加了 `background:#000`，结果整块画面被盖成纯黑、声音照常播放。v4.0.1 已改回全透明。把 `@import` 地址里的 tag 换成 `@v4.0.1`（或清一次缓存）即可。
+答：这是 **v4.0.0 的 bug**，已在 **v4.0.1** 修复，不是 Jellyfin 的问题。原因：jellyfin-web 把 `<video>` 放在 `body` 的第一个子节点 `.videoPlayerContainer`（`position:fixed`），而播放 OSD 页 `#videoOsdPage` 在 DOM 里排在它之后、两者都是 `z-index:auto`，所以 OSD 页永远画在视频上层 —— 官方就是靠这个页面**全透明**让画面透出来的。v4.0.0 给它加了 `background:#000`，结果整块画面被盖成纯黑、声音照常播放。v4.0.1 已改回全透明。把 `@import` 地址里的 tag 换成 `@v4.1.0`（或清一次缓存）即可。
 
 **问：会不会影响播放性能？**
 
-答：不会。整个文件只有 **3 条规则**真正启用实时模糊（玻璃配方 / 播放器控制胶囊 / 底部播放条），且都作用在小面积悬浮层上；卡片、按钮、列表全部使用半透明纯色 + 内描边，不参与模糊。过渡动画只动 `transform` / `opacity` / `background-color`，时长 ≤0.24s。
+答：不会。整个文件只有 **7 条规则**真正启用实时模糊（玻璃配方 / 播放器控制胶囊 / 底部播放条，以及 12.x 现代布局的顶栏、抽屉、弹窗、菜单），且都作用在小面积悬浮层上；卡片、按钮、列表全部使用半透明纯色 + 内描边，不参与模糊。过渡动画只动 `transform` / `opacity` / `background-color`，时长 ≤0.24s。
 
 **问：能只改配色不改布局吗？**
 
@@ -139,10 +153,14 @@ v4 的改法：
 | :---: |
 | <img src="docs/screenshots/player-mobile.webp" width="220" alt="Mobile playback overlay"> |
 
+| 12.4 桌面（MUI 顶栏） | 12.4 手机 |
+| :---: | :---: |
+| <img src="docs/screenshots/home-12.4-desktop.webp" width="430" alt="Jellyfin 12.4 modern layout"> | <img src="docs/screenshots/home-12.4-mobile.webp" width="200" alt="Jellyfin 12.4 mobile layout"> |
+
 ### 文件结构
 
 ```
-liquid-glass.css              # 主题本体（3453 行，单文件，无外部依赖）
+liquid-glass.css              # 主题本体（3855 行，单文件，无外部依赖）
 docs/screenshots/*.webp       # 截图
 docs/schema.jsonld            # Schema.org 结构化数据（SoftwareApplication + FAQPage）
 llms.txt                      # 给 AI 引擎的内容索引
@@ -201,17 +219,31 @@ Result: the glass is **211px** tall at 1440×900 (was 293px) and **235px** on a 
 - **Accessible** — ≥44px touch targets, TV focus rings, honours `prefers-reduced-transparency`, `prefers-reduced-motion` and `prefers-contrast`
 - **Icon mojibake fix** — a built-in, encoding-independent rewrite of all 2178 Material Icons glyph rules, fixing icons that render as `îŸ½` in Safari and some WebViews (Jellyfin serves its icon CSS as raw UTF-8 bytes without a charset, so it gets decoded as Latin-1)
 
+### Jellyfin 12.x modern layout
+
+The 12.x web client defaults to a new React + MUI UI: the top bar is a `MuiAppBar`, the drawer is a `MuiDrawer`, dialogs are `MuiDialog` and menus are `MuiMenu` — none of which are the `.skinHeader` / `.mainDrawer` / `.dialog` class names of 10.x. Since v4.1 the **same glass language is applied to those MUI components too**, so the old and new layouts look like one theme instead of "glass on the old UI, bare stock on the new one".
+
+| 12.4 desktop home | 12.4 mobile drawer |
+| :---: | :---: |
+| <img src="docs/screenshots/home-12.4-desktop.webp" width="430" alt="Jellyfin 12.4 modern layout with a glass MUI app bar over the aurora"> | <img src="docs/screenshots/drawer-12.4-mobile.webp" width="150" alt="Jellyfin 12.4 MUI drawer with glass paper and a selected pill"> |
+
+| 12.4 player | 12.4 dialog |
+| :---: | :---: |
+| <img src="docs/screenshots/player-12.4-desktop.webp" width="430" alt="Jellyfin 12.4 player: soft top gradient and a floating glass control capsule"> | <img src="docs/screenshots/dialog-12.4-desktop.webp" width="430" alt="Jellyfin 12.4 MUI dialog with a glass paper and pill buttons"> |
+
+> On 12.4 the player is a "new React shell around the legacy player view": the `<AppBar>` still exists but is empty (`AppToolbar` does `return null` for `/video`). The theme removes that empty bar with `body:has(.videoPlayerContainer) .MuiAppBar-root`, so no glass strip is left across the top of the picture.
+
 ### Install
 
 **Option 1 (recommended, pinned)** — Dashboard → General → Branding → Custom CSS, paste:
 
 ```css
-@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.0.1/liquid-glass.css");
+@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.1.0/liquid-glass.css");
 ```
 
 **Option 2 (offline / no internet on the server)** — download [`liquid-glass.css`](liquid-glass.css) and paste the entire file into the same Custom CSS box. This is the most robust route: no CDN involved and no cache to fall out of sync.
 
-**Option 3 (tracks upstream)** — replace `@v4.0.1` above with `@main`. Note that jsDelivr caches branch names for up to ~12 hours, so right after a release you may still receive the previous file; if that happens, use Option 1 or 2.
+**Option 3 (tracks upstream)** — replace `@v4.1.0` above with `@main`. Note that jsDelivr caches branch names for up to ~12 hours, so right after a release you may still receive the previous file; if that happens, use Option 1 or 2.
 
 Save, then hard-refresh (`Ctrl/Cmd + Shift + R`).
 
@@ -221,7 +253,7 @@ Save, then hard-refresh (`Ctrl/Cmd + Shift + R`).
 | --- | --- | --- |
 | 10.9.x | ✅ | Built on the classic `.videoOsdBottom` / `.osdControls` class names |
 | 10.10.x | ✅ | Player DOM unchanged |
-| 12.x | ✅ | Verified on **12.4.0** (new React client + legacy player view); also handles the newer `.videoOsd-appBar` safe-area rules |
+| 12.x | ✅ | Verified on **12.4.0**, and **both the default modern (MUI) layout and the legacy layout are themed**: the MUI app bar, drawer, dialog and menu become the same glass, and nothing is painted over the video while playing |
 | Web (browser) | ✅ | Chrome / Edge / Firefox / Safari |
 | Android / iOS app | ✅ | Their embedded WebView loads the same CSS |
 | Android TV / TV clients | ✅ | Extra `.layout-tv` focus-ring tuning |
@@ -240,11 +272,11 @@ That is the v3 behaviour, fixed in v4. If you still see it, your browser is serv
 
 **Black screen with audio only after upgrading to Jellyfin 12.4?**
 
-That was a **v4.0.0 bug**, fixed in **v4.0.1** — not a Jellyfin problem. jellyfin-web inserts the `<video>` element as `body`'s first child (`.videoPlayerContainer`, `position:fixed`), while the playback OSD page `#videoOsdPage` comes later in DOM order and both are `z-index:auto` — so the OSD page always paints above the video. Upstream relies on that page being fully **transparent**. v4.0.0 gave it `background:#000`, which covered the whole picture while audio kept playing. v4.0.1 restores full transparency. Point your `@import` at `@v4.0.1` (or clear the cache) to update.
+That was a **v4.0.0 bug**, fixed in **v4.0.1** — not a Jellyfin problem. jellyfin-web inserts the `<video>` element as `body`'s first child (`.videoPlayerContainer`, `position:fixed`), while the playback OSD page `#videoOsdPage` comes later in DOM order and both are `z-index:auto` — so the OSD page always paints above the video. Upstream relies on that page being fully **transparent**. v4.0.0 gave it `background:#000`, which covered the whole picture while audio kept playing. v4.0.1 restores full transparency. Point your `@import` at `@v4.1.0` (or clear the cache) to update.
 
 **Does it hurt playback performance?**
 
-No. Only **three rules** in the file enable live blur (the glass recipe, the player control capsule and the audio now-playing bar), and all three apply to small floating surfaces. Cards, buttons and lists are translucent solids with an inner stroke and never blur. Animations only touch `transform`, `opacity` and `background-color`, with durations ≤0.24s.
+No. Only **seven rules** in the file enable live blur — the shared glass recipe, the player control capsule, the audio now-playing bar, and the four MUI surfaces of the 12.x modern layout (app bar, drawer, dialog, menu/popover). All of them apply to small floating surfaces. Cards, buttons and lists are translucent solids with an inner stroke and never blur. Animations only touch `transform`, `opacity` and `background-color`, with durations ≤0.24s.
 
 **Can I change the colours without touching the layout?**
 
@@ -282,10 +314,14 @@ Captured from the project's own mock UI (**no real library data**) so the theme 
 | :---: |
 | <img src="docs/screenshots/player-mobile.webp" width="220" alt="Mobile playback overlay"> |
 
+| 12.4 desktop (MUI app bar) | 12.4 mobile |
+| :---: | :---: |
+| <img src="docs/screenshots/home-12.4-desktop.webp" width="430" alt="Jellyfin 12.4 modern layout"> | <img src="docs/screenshots/home-12.4-mobile.webp" width="200" alt="Jellyfin 12.4 mobile layout"> |
+
 ### Repository layout
 
 ```
-liquid-glass.css              # the theme (3453 lines, single file, no dependencies)
+liquid-glass.css              # the theme (3855 lines, single file, no dependencies)
 docs/screenshots/*.webp       # screenshots
 docs/schema.jsonld            # Schema.org structured data (SoftwareApplication + FAQPage)
 llms.txt                      # content index for AI engines

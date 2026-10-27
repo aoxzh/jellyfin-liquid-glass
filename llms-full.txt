@@ -61,13 +61,13 @@ The look follows Apple's "Liquid Glass" material introduced with iOS 26:
 In Jellyfin: **Dashboard → General → Branding → Custom CSS**, paste:
 
 ```css
-@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.0.1/liquid-glass.css");
+@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.1.0/liquid-glass.css");
 ```
 
 Save, then hard-refresh the web client (`Ctrl/Cmd + Shift + R`).
 
 Pinning a tag is recommended for a stable household setup. To track upstream instead, replace
-`@v4.0.1` with `@main` — but note that jsDelivr caches branch names for up to ~12 hours, so a
+`@v4.1.0` with `@main` — but note that jsDelivr caches branch names for up to ~12 hours, so a
 brand-new release can still serve the previous file for a while.
 
 ### Option 2 — paste the file (offline / air-gapped)
@@ -321,11 +321,53 @@ the actual frame colour.
 
 Blur is expensive because the compositor must re-sample everything behind the element on
 every frame in which that content changes. The theme therefore applies `backdrop-filter`
-to exactly **five classes** of floating surface (header, drawer, dialog, login card,
-player control capsule), each a small area. Everything else — cards, buttons, lists,
+to exactly **seven rules** covering small floating surfaces: the shared glass recipe
+(header, drawer scroll container, dialogs, login card, up-next dialog), the player control
+capsule, the audio now-playing bar, and — for Jellyfin 12.x's modern layout — the MUI app
+bar, drawer, dialog and menu/popover. Everything else — cards, buttons, lists,
 inputs — uses `rgba()` fills plus `inset 0 1px 0` highlights, which cost nothing to
 scroll. Transitions are capped at 0.24s and restricted to `transform`, `opacity` and
 `background-color`, all of which are compositor-friendly.
+
+---
+
+## Jellyfin 12.x modern layout (MUI)
+
+Jellyfin 12.x ships a new web client. Its default layout is React + `@mui/material`
+6.5.0, and the chrome is no longer built from the classic class names:
+
+| Surface | 10.x class | 12.x class |
+| --- | --- | --- |
+| Top bar | `.skinHeader` | `.MuiAppBar-root` (`color='transparent'`, `elevation={0}`, fixed, z-index 1100) |
+| Drawer | `.mainDrawer` | `.MuiDrawer-paper` |
+| Dialog | `.dialog` | `.MuiDialog-paper` + `.MuiBackdrop-root` |
+| Menu | `.actionSheet` / `.contextMenu` | `.MuiMenu-paper` / `.MuiPopover-paper` |
+| List rows | `.navMenuOption` / `.listItem` | `.MuiListItemButton-root` |
+
+Because those are MUI components, their styles are injected at runtime by emotion into
+`<head>`, which means a plain theme rule can lose on specificity — the MUI block therefore
+uses `!important` throughout, like the rest of the file. `apphost.js` `getDefaultLayout()`
+returns `LayoutMode.Modern`, so this is what a normal 12.x user sees.
+
+Since v4.1 the theme styles those five surfaces with the same tokens and the same visual
+language as the legacy ones: `.MuiAppBar-root` gets the translucent gradient, `blur(18px)
+saturate(180%)`, a 1px bottom hairline and an inset top highlight; `.MuiDrawer-paper` and
+`.MuiDialog-paper` get `blur(26px) saturate(190%)` with `--lg-radius-panel`; menu/popover
+paper gets `--lg-radius-card`; list rows become rounded pills with an accent selection ring.
+
+Two traps are worth documenting:
+
+1. **The app bar is empty on `/video`.** `apps/modern/components/AppToolbar/index.tsx`
+   does `if (location.pathname === '/video') return null;` — the `AppBar` is still rendered
+   (fixed, 48px dense) but contains nothing. Without a guard, any glass on it paints a band
+   across the top of the video. The theme adds
+   `body:has(.videoPlayerContainer) .MuiAppBar-root { background: none; backdrop-filter: none;
+   border-bottom: 0; box-shadow: none }`, using the fact that only video playback creates a
+   `.videoPlayerContainer` (audio playback appends `.mediaPlayerAudio` instead).
+2. **The library tabs are text buttons.** `UserViewNav` renders `<Button variant='text'
+   color={isCurrent ? 'primary' : 'inherit'}>`, so a blanket `.MuiButton-text { color: … }`
+   would recolour every tab at once. The theme scopes the accent colour to
+   `.MuiButton-text.MuiButton-colorPrimary` and leaves `colorInherit` at `--lg-text`.
 
 ---
 
@@ -380,11 +422,12 @@ confirm the code is in **Dashboard → General → Branding → Custom CSS**, an
 
 **There is still a blurry bar covering the bottom of the video while playing.**
 That is the v3 behaviour, fixed in v4. If you still see it, the browser is serving cached
-CSS — clear the cache or switch to a versioned `@import` URL such as `@v4.0.1`.
+CSS — clear the cache or switch to a versioned `@import` URL such as `@v4.1.0`.
 
 **Does it hurt playback performance?**
-No. Only **three rules** in the file enable live blur (the glass recipe, the player control
-capsule and the audio now-playing bar), and all three apply to small floating surfaces.
+No. Only **seven rules** in the file enable live blur — the glass recipe, the player control
+capsule, the audio now-playing bar, and the four MUI surfaces of the 12.x modern layout
+(app bar, drawer, dialog, menu/popover) — and all of them apply to small floating surfaces.
 Cards, buttons and lists are translucent solids with an inner stroke and never blur.
 Animations touch only `transform`, `opacity` and `background-color`, with durations ≤0.24s.
 
@@ -447,7 +490,7 @@ All tokens are declared on `:root` at the top of `liquid-glass.css`.
 ## Repository layout
 
 ```
-liquid-glass.css              the theme (3453 lines, single file, no dependencies)
+liquid-glass.css              the theme (3855 lines, single file, no dependencies)
 docs/screenshots/*.webp       screenshots (WebP, ~536 KB total)
 docs/schema.jsonld            Schema.org description of the project
 llms.txt                      content index for AI engines
@@ -478,6 +521,11 @@ a neutral `demo` user.
 | `docs/screenshots/home-tablet.webp` | Tablet layout, 834×1112 |
 | `docs/screenshots/home-tv.webp` | TV layout, 1920×1080 |
 | `docs/screenshots/player-mobile.webp` | Phone playback overlay, 390×844 |
+| `docs/screenshots/home-12.4-desktop.webp` | Jellyfin 12.4 modern layout, 1440×900: glass MUI app bar with library tabs, 7-column grid |
+| `docs/screenshots/home-12.4-mobile.webp` | Jellyfin 12.4 modern layout, 390×844 |
+| `docs/screenshots/drawer-12.4-mobile.webp` | Jellyfin 12.4 MUI drawer: glass paper, accent selection pill, LIBRARIES subheader |
+| `docs/screenshots/dialog-12.4-desktop.webp` | Jellyfin 12.4 MUI dialog with a glass paper and pill buttons |
+| `docs/screenshots/player-12.4-desktop.webp` | Jellyfin 12.4 player: soft top gradient, floating glass control capsule, frame visible around it |
 
 ---
 
@@ -510,13 +558,14 @@ target versions: 10.9.x, 10.10.x, 12.x
 delivery: single CSS file, no plugin, no server change
 install: Dashboard > General > Branding > Custom CSS
 file: liquid-glass.css
-lines: 3453
-bytes: 192086
+lines: 3855
+bytes: 203754
 dependencies: none
-backdrop-filter declarations: 14 (7 rules x 2 with the -webkit- mirror): 3 rules enable blur, 4 rules reset it to none
+backdrop-filter declarations: 24 (12 rules x 2 with the -webkit- mirror): 7 rules enable blur, 5 rules reset it to none
 icon glyph rules: 2178
 license: MIT
 repository: https://github.com/aoxzh/jellyfin-liquid-glass
 primary fix in v4: playback overlay no longer covers the video
 regression fixed in v4.0.1: opaque #videoOsdPage caused a black screen on Jellyfin 12.4
+feature added in v4.1.0: Jellyfin 12.x modern (React + MUI) layout is themed as well
 ```

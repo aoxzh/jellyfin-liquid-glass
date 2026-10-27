@@ -9,7 +9,7 @@
       "applicationCategory": "DesignApplication",
       "applicationSubCategory": "Custom CSS theme for the Jellyfin web client",
       "operatingSystem": "Web browser (Chrome, Edge, Firefox, Safari), Android, iOS, Android TV",
-      "softwareVersion": "4.0.1",
+      "softwareVersion": "4.1.0",
       "license": "https://opensource.org/licenses/MIT",
       "isAccessibleForFree": true,
       "downloadUrl": "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/liquid-glass.css",
@@ -19,6 +19,7 @@
       "featureList": [
         "Aurora gradient background with four radial gradients over a deep-space linear base",
         "Frosted glass confined to floating layers (header, drawer, dialogs, login card, player controls)",
+        "Jellyfin 12.x modern (React + MUI) layout support: the MUI app bar, drawer, dialog and menu receive the same glass treatment as the legacy header, drawer and dialogs",
         "Concentric corner radius system",
         "Capsule primary buttons with transform-only hover lift",
         "iOS-style grouped inset lists on settings pages",
@@ -38,7 +39,12 @@
         "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/home-desktop.webp",
         "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/detail-desktop.webp",
         "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/player-after-desktop.webp",
-        "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/settings-desktop.webp"
+        "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/settings-desktop.webp",
+        "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/home-12.4-desktop.webp",
+        "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/home-12.4-mobile.webp",
+        "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/drawer-12.4-mobile.webp",
+        "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/dialog-12.4-desktop.webp",
+        "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/docs/screenshots/player-12.4-desktop.webp"
       ]
     },
     {
@@ -58,7 +64,7 @@
           "name": "How do I install the Liquid Glass theme in Jellyfin?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "In Jellyfin go to Dashboard, then General, then Branding, then Custom CSS, and paste either the full contents of liquid-glass.css or this import line: @import url(\"https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.0.1/liquid-glass.css\"); Then save and hard-refresh the web client with Ctrl/Cmd + Shift + R. Pinning a tag is recommended; to track upstream instead, replace @v4.0.1 with @main (jsDelivr caches branch names for up to ~12 hours)."
+            "text": "In Jellyfin go to Dashboard, then General, then Branding, then Custom CSS, and paste either the full contents of liquid-glass.css or this import line: @import url(\"https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.1.0/liquid-glass.css\"); Then save and hard-refresh the web client with Ctrl/Cmd + Shift + R. Pinning a tag is recommended; to track upstream instead, replace @v4.1.0 with @main (jsDelivr caches branch names for up to ~12 hours)."
           }
         },
         {
@@ -98,7 +104,7 @@
           "name": "Does the theme hurt playback or scrolling performance?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No. Only three rules in the file enable live blur: the shared glass recipe (header and drawer scroll containers, dialogs, login form, up-next dialog), the player control capsule, and the audio now-playing bar. All three apply to small floating surfaces. Cards, buttons and lists use translucent solids plus an inner stroke highlight and never trigger live blur, so scrolling does not re-sample the backdrop. Animations touch only transform, opacity and background-color, with durations of 0.24s or less."
+            "text": "No. Only seven rules in the file enable live blur: the shared glass recipe (header and drawer scroll containers, dialogs, login form, up-next dialog), the player control capsule, the audio now-playing bar, and the four MUI surfaces of the Jellyfin 12.x modern layout (app bar, drawer, dialog, menu/popover). All of them apply to small floating surfaces. Cards, buttons and lists use translucent solids plus an inner stroke highlight and never trigger live blur, so scrolling does not re-sample the backdrop. Animations touch only transform, opacity and background-color, with durations of 0.24s or less."
           }
         },
         {
