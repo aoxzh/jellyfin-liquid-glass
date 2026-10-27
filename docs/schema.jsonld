@@ -58,7 +58,7 @@
           "name": "How do I install the Liquid Glass theme in Jellyfin?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "In Jellyfin go to Dashboard, then General, then Branding, then Custom CSS, and paste either the full contents of liquid-glass.css or this import line: @import url(\"https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@main/liquid-glass.css\"); Then save and hard-refresh the web client with Ctrl/Cmd + Shift + R. To pin a version, replace @main with a tag such as @v4.0.1."
+            "text": "In Jellyfin go to Dashboard, then General, then Branding, then Custom CSS, and paste either the full contents of liquid-glass.css or this import line: @import url(\"https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.0.1/liquid-glass.css\"); Then save and hard-refresh the web client with Ctrl/Cmd + Shift + R. Pinning a tag is recommended; to track upstream instead, replace @v4.0.1 with @main (jsDelivr caches branch names for up to ~12 hours)."
           }
         },
         {

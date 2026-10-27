@@ -56,24 +56,25 @@ The look follows Apple's "Liquid Glass" material introduced with iOS 26:
 
 ## Installation
 
-### Option 1 — import from a CDN (recommended, tracks upstream)
+### Option 1 — import from a CDN (recommended, pinned)
 
 In Jellyfin: **Dashboard → General → Branding → Custom CSS**, paste:
 
 ```css
-@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@main/liquid-glass.css");
+@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.0.1/liquid-glass.css");
 ```
 
 Save, then hard-refresh the web client (`Ctrl/Cmd + Shift + R`).
 
-To pin a version instead of tracking `main`, replace `@main` with a tag, for example
-`@v4.0.1`. Pinning is recommended for a stable household setup.
+Pinning a tag is recommended for a stable household setup. To track upstream instead, replace
+`@v4.0.1` with `@main` — but note that jsDelivr caches branch names for up to ~12 hours, so a
+brand-new release can still serve the previous file for a while.
 
 ### Option 2 — paste the file (offline / air-gapped)
 
 Download `liquid-glass.css` from the repository and paste its entire contents into the
-same Custom CSS box. This works without internet access and cannot be broken by a CDN
-outage.
+same Custom CSS box. This works without internet access, cannot be broken by a CDN
+outage, and cannot fall out of sync with a cache — the most robust route.
 
 ### Verifying the install
 

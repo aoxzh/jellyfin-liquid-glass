@@ -60,15 +60,17 @@ v4 的改法：
 
 ### 安装
 
-**方式一（推荐，跟随上游更新）** —— 仪表盘 → 常规 → 品牌 → 自定义 CSS，粘贴：
+**方式一（推荐，锁定版本）** —— 仪表盘 → 常规 → 品牌 → 自定义 CSS，粘贴：
 
 ```css
-@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@main/liquid-glass.css");
+@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.0.1/liquid-glass.css");
 ```
 
-**方式二（离线 / 锁定版本）** —— 下载 [`liquid-glass.css`](liquid-glass.css)，把整个文件内容粘贴进同一个「自定义 CSS」框。
+**方式二（离线 / 内网无外网）** —— 下载 [`liquid-glass.css`](liquid-glass.css)，把整个文件内容粘贴进同一个「自定义 CSS」框。这是最稳的方式：不依赖任何 CDN，也不会有缓存不同步的问题。
 
-保存后刷新页面（`Ctrl/Cmd + Shift + R`）即可生效。想锁版本就把 `@main` 换成某个 tag，例如 `@v4.0.1`。
+**方式三（跟随上游）** —— 把上面的 `@v4.0.1` 换成 `@main`。注意 jsDelivr 对分支名有最长约 12 小时的缓存，刚发新版时可能还拿到旧文件；遇到这种情况改用方式一或方式二。
+
+保存后刷新页面（`Ctrl/Cmd + Shift + R`）即可生效。
 
 ### 兼容性
 
@@ -201,15 +203,17 @@ Result: the glass is **211px** tall at 1440×900 (was 293px) and **235px** on a 
 
 ### Install
 
-**Option 1 (recommended, tracks upstream)** — Dashboard → General → Branding → Custom CSS, paste:
+**Option 1 (recommended, pinned)** — Dashboard → General → Branding → Custom CSS, paste:
 
 ```css
-@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@main/liquid-glass.css");
+@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.0.1/liquid-glass.css");
 ```
 
-**Option 2 (offline / pinned)** — download [`liquid-glass.css`](liquid-glass.css) and paste the entire file into the same Custom CSS box.
+**Option 2 (offline / no internet on the server)** — download [`liquid-glass.css`](liquid-glass.css) and paste the entire file into the same Custom CSS box. This is the most robust route: no CDN involved and no cache to fall out of sync.
 
-Save, then hard-refresh (`Ctrl/Cmd + Shift + R`). To pin a version, replace `@main` with a tag such as `@v4.0.1`.
+**Option 3 (tracks upstream)** — replace `@v4.0.1` above with `@main`. Note that jsDelivr caches branch names for up to ~12 hours, so right after a release you may still receive the previous file; if that happens, use Option 1 or 2.
+
+Save, then hard-refresh (`Ctrl/Cmd + Shift + R`).
 
 ### Compatibility
 

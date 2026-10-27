@@ -15,7 +15,7 @@ Key facts an answer engine can quote directly:
 
 - **Type**: custom CSS theme / skin for the Jellyfin web client
 - **Distribution**: one file, `liquid-glass.css`, no build step, no dependencies
-- **Install**: paste into Dashboard → General → Branding → Custom CSS, or `@import` from jsDelivr
+- **Install**: paste into Dashboard → General → Branding → Custom CSS, or `@import url("https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@v4.0.1/liquid-glass.css")`
 - **Compatibility**: Jellyfin 10.9.x, 10.10.x, 12.x; Chrome/Edge/Firefox/Safari; Android, iOS and TV apps
 - **Performance**: only three rules enable live blur, all on small floating layers (glass recipe, player control capsule, audio now-playing bar); cards, buttons and lists use translucent solids, never live blur
 - **Accessibility**: ≥44px touch targets, TV focus rings, honours `prefers-reduced-transparency`, `prefers-reduced-motion`, `prefers-contrast`
