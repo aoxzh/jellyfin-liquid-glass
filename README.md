@@ -68,7 +68,7 @@ v4 的改法：
 
 **方式二（离线 / 锁定版本）** —— 下载 [`liquid-glass.css`](liquid-glass.css)，把整个文件内容粘贴进同一个「自定义 CSS」框。
 
-保存后刷新页面（`Ctrl/Cmd + Shift + R`）即可生效。想锁版本就把 `@main` 换成某个 tag，例如 `@v4.0.0`。
+保存后刷新页面（`Ctrl/Cmd + Shift + R`）即可生效。想锁版本就把 `@main` 换成某个 tag，例如 `@v4.0.1`。
 
 ### 兼容性
 
@@ -76,7 +76,7 @@ v4 的改法：
 | --- | --- | --- |
 | 10.9.x | ✅ | 基于 `.videoOsdBottom` / `.osdControls` 经典类名 |
 | 10.10.x | ✅ | 同上，播放器 DOM 未变 |
-| 12.x | ✅ | 新增的 `.videoOsd-appBar` 安全区规则同样兼容 |
+| 12.x | ✅ | 已在 **12.4.0**（新 React 客户端 + 经典播放器视图）实测；`.videoOsd-appBar` 安全区规则同样兼容 |
 | 网页端（浏览器） | ✅ | Chrome / Edge / Firefox / Safari |
 | Android / iOS App | ✅ | 内置 WebView 走同一套 CSS |
 | Android TV / 电视端 | ✅ | 额外有 `.layout-tv` 焦点环优化 |
@@ -92,6 +92,10 @@ v4 的改法：
 **问：播放视频时底部还有一条模糊的东西挡画面？**
 
 答：v4 已修复。如果你看到的是 v3 的效果，说明浏览器缓存了旧 CSS —— 清缓存或改用带版本号的 `@import` 地址。
+
+**问：升级到 Jellyfin 12.4 后播放黑屏、只有声音？**
+
+答：这是 **v4.0.0 的 bug**，已在 **v4.0.1** 修复，不是 Jellyfin 的问题。原因：jellyfin-web 把 `<video>` 放在 `body` 的第一个子节点 `.videoPlayerContainer`（`position:fixed`），而播放 OSD 页 `#videoOsdPage` 在 DOM 里排在它之后、两者都是 `z-index:auto`，所以 OSD 页永远画在视频上层 —— 官方就是靠这个页面**全透明**让画面透出来的。v4.0.0 给它加了 `background:#000`，结果整块画面被盖成纯黑、声音照常播放。v4.0.1 已改回全透明。把 `@import` 地址里的 tag 换成 `@v4.0.1`（或清一次缓存）即可。
 
 **问：会不会影响播放性能？**
 
@@ -136,7 +140,7 @@ v4 的改法：
 ### 文件结构
 
 ```
-liquid-glass.css              # 主题本体（3435 行，单文件，无外部依赖）
+liquid-glass.css              # 主题本体（3453 行，单文件，无外部依赖）
 docs/screenshots/*.webp       # 截图
 docs/schema.jsonld            # Schema.org 结构化数据（SoftwareApplication + FAQPage）
 llms.txt                      # 给 AI 引擎的内容索引
@@ -205,7 +209,7 @@ Result: the glass is **211px** tall at 1440×900 (was 293px) and **235px** on a 
 
 **Option 2 (offline / pinned)** — download [`liquid-glass.css`](liquid-glass.css) and paste the entire file into the same Custom CSS box.
 
-Save, then hard-refresh (`Ctrl/Cmd + Shift + R`). To pin a version, replace `@main` with a tag such as `@v4.0.0`.
+Save, then hard-refresh (`Ctrl/Cmd + Shift + R`). To pin a version, replace `@main` with a tag such as `@v4.0.1`.
 
 ### Compatibility
 
@@ -213,7 +217,7 @@ Save, then hard-refresh (`Ctrl/Cmd + Shift + R`). To pin a version, replace `@ma
 | --- | --- | --- |
 | 10.9.x | ✅ | Built on the classic `.videoOsdBottom` / `.osdControls` class names |
 | 10.10.x | ✅ | Player DOM unchanged |
-| 12.x | ✅ | Also handles the newer `.videoOsd-appBar` safe-area rules |
+| 12.x | ✅ | Verified on **12.4.0** (new React client + legacy player view); also handles the newer `.videoOsd-appBar` safe-area rules |
 | Web (browser) | ✅ | Chrome / Edge / Firefox / Safari |
 | Android / iOS app | ✅ | Their embedded WebView loads the same CSS |
 | Android TV / TV clients | ✅ | Extra `.layout-tv` focus-ring tuning |
@@ -229,6 +233,10 @@ Jellyfin caches custom CSS. Hard-refresh first (`Ctrl/Cmd + Shift + R`), confirm
 **There is still a blurry bar covering the bottom of the video while playing.**
 
 That is the v3 behaviour, fixed in v4. If you still see it, your browser is serving cached CSS — clear the cache or switch to a versioned `@import` URL.
+
+**Black screen with audio only after upgrading to Jellyfin 12.4?**
+
+That was a **v4.0.0 bug**, fixed in **v4.0.1** — not a Jellyfin problem. jellyfin-web inserts the `<video>` element as `body`'s first child (`.videoPlayerContainer`, `position:fixed`), while the playback OSD page `#videoOsdPage` comes later in DOM order and both are `z-index:auto` — so the OSD page always paints above the video. Upstream relies on that page being fully **transparent**. v4.0.0 gave it `background:#000`, which covered the whole picture while audio kept playing. v4.0.1 restores full transparency. Point your `@import` at `@v4.0.1` (or clear the cache) to update.
 
 **Does it hurt playback performance?**
 
@@ -273,7 +281,7 @@ Captured from the project's own mock UI (**no real library data**) so the theme 
 ### Repository layout
 
 ```
-liquid-glass.css              # the theme (3435 lines, single file, no dependencies)
+liquid-glass.css              # the theme (3453 lines, single file, no dependencies)
 docs/screenshots/*.webp       # screenshots
 docs/schema.jsonld            # Schema.org structured data (SoftwareApplication + FAQPage)
 llms.txt                      # content index for AI engines

@@ -111,16 +111,33 @@ body::after {
 #itemDetailPage,
 .dashboardDocument,
 .fullscreenDocument,
-.backgroundContainer,
-#videoOsdPage,
-.videoOsdPage {
+.backgroundContainer {
     background: transparent !important;
 }
 
-/* 播放器页自身铺纯黑(视频四周留黑边), 避免极光背景从画面缝隙里透出来 */
+/* ==========================================================================
+   播放器页必须保持完全透明 —— 否则整块视频被盖成黑屏
+   ==========================================================================
+   jellyfin-web 把 <video> 放在 body 的第一个子节点(.videoPlayerContainer,
+   position:fixed), 而播放 OSD 页 #videoOsdPage 是 .mainAnimatedPages 里
+   position:absolute 的后代 —— 在 DOM 里排在视频之后, 且两者都是 z-index:auto,
+   所以后出现的 OSD 页会画在视频上层。
+   htmlVideoPlayer/plugin.js 的 onNavigatedToOsd() 还会主动移除
+   .videoPlayerContainer-onTop, 视频因此失去唯一的 z-index:1000。
+   结论: 官方就是靠 #videoOsdPage 全透明让视频透出来的。
+   给它任何不透明背景 = 视频被整块盖住, 只剩声音(12.x 与 10.x 同理)。
+   画面四周的黑边由 .videoPlayerContainer 自带的 background:#000 提供。 */
+#videoOsdPage,
 .videoOsdPage,
-#videoOsdPage {
-    background: #000 !important;
+#videoOsdPage.mainAnimatedPage {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* 播放时不叠颗粒层: 0.022 的噪点铺在电影画面上属于画质损耗 */
+body:has(.videoPlayerContainer)::after {
+    display: none;
 }
 
 ::selection {

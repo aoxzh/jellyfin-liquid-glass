@@ -67,7 +67,7 @@ In Jellyfin: **Dashboard → General → Branding → Custom CSS**, paste:
 Save, then hard-refresh the web client (`Ctrl/Cmd + Shift + R`).
 
 To pin a version instead of tracking `main`, replace `@main` with a tag, for example
-`@v4.0.0`. Pinning is recommended for a stable household setup.
+`@v4.0.1`. Pinning is recommended for a stable household setup.
 
 ### Option 2 — paste the file (offline / air-gapped)
 
@@ -232,6 +232,65 @@ player header is reset explicitly:
 }
 ```
 
+### The third bug: black screen on Jellyfin 12.4 (fixed in v4.0.1)
+
+v4.0.0 shipped this rule, intending to hide the aurora backdrop behind the player page:
+
+```css
+/* WRONG — v4.0.0 only, reverted in v4.0.1 */
+.videoOsdPage,
+#videoOsdPage {
+    background: #000 !important;
+}
+```
+
+On Jellyfin 12.4 that produces **a black screen with audio only**. The reason is the paint
+order of the stock client:
+
+- `src/plugins/htmlVideoPlayer/plugin.js` builds `<div class="videoPlayerContainer">` around
+  the `<video>` element and calls `document.body.insertBefore(playerDlg, document.body.firstChild)`
+  — so the video container is `body`'s **first child** and a sibling that *precedes* the app root.
+- `src/plugins/htmlVideoPlayer/style.scss` gives it `position: fixed` plus
+  `.videoPlayerContainer-onTop { z-index: 1000 }`.
+- `onNavigatedToOsd()` then does `dlg.classList.remove('videoPlayerContainer-onTop')`, so while
+  the OSD is visible the video container has **`z-index: auto`**.
+- `#videoOsdPage` is a `position: absolute` descendant of `.mainAnimatedPages`
+  (`src/components/viewContainer.js` appends legacy views there, `viewContainer.scss` sets
+  `.mainAnimatedPage { position: absolute; inset: 0 }`), and it comes **later** in DOM order.
+
+With both elements at `z-index: auto`, the later one wins: the OSD page paints **on top of the
+video**. Upstream relies on that page being fully transparent. Any opaque background — including
+`#000` — hides the entire picture while audio keeps playing. The letterbox bars are already
+painted by `.videoPlayerContainer`'s own `background: #000`, so the page must stay transparent.
+
+The v4.0.1 fix:
+
+```css
+#videoOsdPage,
+.videoOsdPage,
+#videoOsdPage.mainAnimatedPage {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+```
+
+The extra `#videoOsdPage.mainAnimatedPage` compound selector outranks a plain
+`#videoOsdPage { … !important }` so a later custom-CSS rule is less likely to re-break it.
+
+v4.0.1 also stops compositing the 2.2%-opacity grain layer over video playback:
+
+```css
+body:has(.videoPlayerContainer)::after {
+    display: none;
+}
+```
+
+This was verified against the real 12.4 source tree and reproduced in a Playwright harness that
+recreates the exact 12.4 DOM (`body > .videoPlayerContainer` + `#reactRoot > .mainAnimatedPages >
+#videoOsdPage`): with the v4.0.0 rule the sampled centre pixel is `rgb(2,2,2)`, with v4.0.1 it is
+the actual frame colour.
+
 ---
 
 ## Features
@@ -320,7 +379,7 @@ confirm the code is in **Dashboard → General → Branding → Custom CSS**, an
 
 **There is still a blurry bar covering the bottom of the video while playing.**
 That is the v3 behaviour, fixed in v4. If you still see it, the browser is serving cached
-CSS — clear the cache or switch to a versioned `@import` URL such as `@v4.0.0`.
+CSS — clear the cache or switch to a versioned `@import` URL such as `@v4.0.1`.
 
 **Does it hurt playback performance?**
 No. Only **three rules** in the file enable live blur (the glass recipe, the player control
@@ -387,7 +446,7 @@ All tokens are declared on `:root` at the top of `liquid-glass.css`.
 ## Repository layout
 
 ```
-liquid-glass.css              the theme (3435 lines, single file, no dependencies)
+liquid-glass.css              the theme (3453 lines, single file, no dependencies)
 docs/screenshots/*.webp       screenshots (WebP, ~536 KB total)
 docs/schema.jsonld            Schema.org description of the project
 llms.txt                      content index for AI engines
@@ -450,12 +509,13 @@ target versions: 10.9.x, 10.10.x, 12.x
 delivery: single CSS file, no plugin, no server change
 install: Dashboard > General > Branding > Custom CSS
 file: liquid-glass.css
-lines: 3435
-bytes: 190987
+lines: 3453
+bytes: 192086
 dependencies: none
 backdrop-filter declarations: 14 (7 rules x 2 with the -webkit- mirror): 3 rules enable blur, 4 rules reset it to none
 icon glyph rules: 2178
 license: MIT
 repository: https://github.com/aoxzh/jellyfin-liquid-glass
 primary fix in v4: playback overlay no longer covers the video
+regression fixed in v4.0.1: opaque #videoOsdPage caused a black screen on Jellyfin 12.4
 ```

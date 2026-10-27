@@ -9,7 +9,7 @@
       "applicationCategory": "DesignApplication",
       "applicationSubCategory": "Custom CSS theme for the Jellyfin web client",
       "operatingSystem": "Web browser (Chrome, Edge, Firefox, Safari), Android, iOS, Android TV",
-      "softwareVersion": "4.0.0",
+      "softwareVersion": "4.0.1",
       "license": "https://opensource.org/licenses/MIT",
       "isAccessibleForFree": true,
       "downloadUrl": "https://raw.githubusercontent.com/aoxzh/jellyfin-liquid-glass/main/liquid-glass.css",
@@ -58,7 +58,7 @@
           "name": "How do I install the Liquid Glass theme in Jellyfin?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "In Jellyfin go to Dashboard, then General, then Branding, then Custom CSS, and paste either the full contents of liquid-glass.css or this import line: @import url(\"https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@main/liquid-glass.css\"); Then save and hard-refresh the web client with Ctrl/Cmd + Shift + R. To pin a version, replace @main with a tag such as @v4.0.0."
+            "text": "In Jellyfin go to Dashboard, then General, then Branding, then Custom CSS, and paste either the full contents of liquid-glass.css or this import line: @import url(\"https://cdn.jsdelivr.net/gh/aoxzh/jellyfin-liquid-glass@main/liquid-glass.css\"); Then save and hard-refresh the web client with Ctrl/Cmd + Shift + R. To pin a version, replace @main with a tag such as @v4.0.1."
           }
         },
         {
@@ -75,6 +75,14 @@
           "acceptedAnswer": {
             "@type": "Answer",
             "text": "Version 4 returns .videoOsdBottom to a pure scrim: a faint linear gradient with backdrop-filter: none, border-top: 0 and padding-top reduced to 1.5em. The glass is moved onto .osdControls, the element that actually holds the buttons, as a centred floating capsule capped at 62rem with 1.5rem radii. The hidden state .videoOsdBottom-hidden additionally disables backdrop-filter, because iOS/WebKit can keep a blur layer alive at opacity 0. Result: the overlay is 211px tall at 1440x900 instead of 293px, and 235px on a phone instead of 343px, with the bottom edge of the picture visible."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is playback a black screen with audio only on Jellyfin 12.4?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "That was a v4.0.0 regression, fixed in v4.0.1. jellyfin-web inserts the video element as body's first child in .videoPlayerContainer (position: fixed) and drops its .videoPlayerContainer-onTop z-index while the on-screen controls are up, while the playback OSD page #videoOsdPage is a position: absolute descendant of .mainAnimatedPages that comes later in DOM order. Both end up at z-index: auto, so the later element paints on top of the video. Upstream relies on #videoOsdPage being fully transparent. v4.0.0 gave it background: #000, which covered the whole frame and left only audio. v4.0.1 restores background: transparent so the video shows through again."
           }
         },
         {
